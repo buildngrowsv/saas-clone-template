@@ -1,0 +1,238 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/**
+ * BRAND COLOR SYSTEM — UpscaleAI (Clone #3 — AI Image Upscaler)
+ *
+ * We chose a teal/cyan primary color because it evokes clarity, sharpness,
+ * and precision — all qualities that resonate with "image enhancement" and
+ * "upscaling." Teal is associated with technology and trust, which builds
+ * confidence that the AI can genuinely improve image quality.
+ *
+ * Competitors in the image upscaling space tend to use purple (Topaz Labs)
+ * or blue (Let's Enhance). Teal gives us a distinct visual identity while
+ * feeling modern, clean, and professional — much like the sharp, enhanced
+ * images our tool produces.
+ *
+ * The gradient system uses teal-to-emerald which visually represents the
+ * "enhancement" journey — from a dull original to a vibrant, sharp result.
+ * Users subconsciously associate teal/green tones with growth, improvement,
+ * and positive transformation.
+ *
+ * SEO target keyword: "upscale image free AI"
+ * Pricing: Free tier (3/day) + Pro ($9.99/mo unlimited)
+ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/**
+ * LIGHT MODE COLOR PALETTE — Teal/Cyan theme
+ *
+ * The oklch color space is used because it provides perceptually uniform
+ * color manipulation. The hue angle 180 corresponds to teal/cyan.
+ * This is the same approach used by clone-1 (violet at 280) and clone-2
+ * (amber at 85), ensuring visual consistency across the SaaS template
+ * family while giving each clone its own distinct personality.
+ *
+ * The primary color at oklch(0.55 0.18 180) is a medium-dark teal that:
+ * - Has sufficient contrast against white backgrounds for WCAG AA
+ * - Looks vibrant and "tech-forward" without being garish
+ * - Works well as both a text color and a background color
+ */
+:root {
+  --background: oklch(0.99 0.002 180);
+  --foreground: oklch(0.13 0.02 180);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.02 180);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.02 180);
+  /* Teal/Cyan primary — evokes clarity, sharpness, and precision for an upscaling tool */
+  --primary: oklch(0.55 0.18 180);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.01 180);
+  --secondary-foreground: oklch(0.25 0.04 180);
+  --muted: oklch(0.96 0.005 180);
+  --muted-foreground: oklch(0.50 0.02 180);
+  --accent: oklch(0.94 0.03 180);
+  --accent-foreground: oklch(0.25 0.04 180);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.005 180);
+  --input: oklch(0.92 0.005 180);
+  --ring: oklch(0.55 0.18 180);
+  --chart-1: oklch(0.55 0.18 180);
+  --chart-2: oklch(0.65 0.15 160);
+  --chart-3: oklch(0.50 0.12 200);
+  --chart-4: oklch(0.70 0.14 140);
+  --chart-5: oklch(0.45 0.10 220);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.55 0.18 180);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.55 0.18 180);
+}
+
+/**
+ * DARK MODE COLOR PALETTE — Teal/Cyan theme (darker variant)
+ *
+ * Dark mode uses a lighter teal primary (oklch 0.70) to maintain
+ * sufficient contrast against the dark background. The background
+ * itself has a slight teal tint (hue 180) so it doesn't feel cold
+ * or disconnected from the brand.
+ */
+.dark {
+  --background: oklch(0.12 0.02 180);
+  --foreground: oklch(0.96 0.01 180);
+  --card: oklch(0.17 0.025 180);
+  --card-foreground: oklch(0.96 0.01 180);
+  --popover: oklch(0.17 0.025 180);
+  --popover-foreground: oklch(0.96 0.01 180);
+  --primary: oklch(0.70 0.16 180);
+  --primary-foreground: oklch(0.12 0.02 180);
+  --secondary: oklch(0.22 0.03 180);
+  --secondary-foreground: oklch(0.96 0.01 180);
+  --muted: oklch(0.22 0.03 180);
+  --muted-foreground: oklch(0.65 0.04 180);
+  --accent: oklch(0.22 0.03 180);
+  --accent-foreground: oklch(0.96 0.01 180);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.70 0.16 180);
+  --chart-1: oklch(0.70 0.16 180);
+  --chart-2: oklch(0.75 0.14 160);
+  --chart-3: oklch(0.60 0.12 200);
+  --chart-4: oklch(0.80 0.12 140);
+  --chart-5: oklch(0.55 0.10 220);
+  --sidebar: oklch(0.17 0.025 180);
+  --sidebar-foreground: oklch(0.96 0.01 180);
+  --sidebar-primary: oklch(0.70 0.16 180);
+  --sidebar-primary-foreground: oklch(0.96 0.01 180);
+  --sidebar-accent: oklch(0.22 0.03 180);
+  --sidebar-accent-foreground: oklch(0.96 0.01 180);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.70 0.16 180);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+}
+
+/**
+ * CUSTOM UTILITY CLASSES — UpscaleAI
+ *
+ * These utility classes power the hero gradient, the animated background
+ * pattern, and the before/after comparison slider used in the image
+ * upscale preview. The teal gradient (180 hue) matches our brand and
+ * evokes the "enhancement" transformation the tool provides.
+ *
+ * The comparison-grid utility is used in the before/after view to show
+ * a subtle grid that helps users see the difference in sharpness and
+ * detail between the original and upscaled images.
+ */
+
+@layer utilities {
+  /**
+   * Animated gradient text — teal-to-emerald gradient for the hero heading.
+   * The color transition from teal (180) through cyan (170) to emerald (160)
+   * creates a sense of "enhancement in motion" that mirrors what the tool does
+   * to images. The animation makes the heading feel alive and draws the eye.
+   */
+  .gradient-text {
+    background: linear-gradient(135deg, oklch(0.55 0.18 180), oklch(0.60 0.16 160), oklch(0.55 0.18 180));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 4s ease infinite;
+  }
+
+  /**
+   * Comparison grid pattern — used behind before/after image comparisons.
+   * This subtle grid helps users see the sharpness improvement by providing
+   * a reference frame. Unlike the checkerboard used in bg-remover (which
+   * signals transparency), this grid signals "detail" and "precision."
+   */
+  .comparison-grid-bg {
+    background-image:
+      linear-gradient(45deg, #e8e8e8 25%, transparent 25%),
+      linear-gradient(-45deg, #e8e8e8 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e8e8e8 75%),
+      linear-gradient(-45deg, transparent 75%, #e8e8e8 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  }
+
+  /**
+   * Subtle animated background dots — adds depth to the hero section.
+   * Uses teal color (hue 180) at very low opacity to create a tech-forward
+   * feeling without distracting from the content. The dot pattern evokes
+   * "pixels" which is fitting for an image upscaling tool.
+   */
+  .hero-pattern {
+    background-image: radial-gradient(circle at 1px 1px, oklch(0.55 0.18 180 / 0.08) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

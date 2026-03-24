@@ -1,0 +1,217 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/**
+ * BRAND COLOR SYSTEM — ColorizeAI (Clone #2: AI Photo Colorizer)
+ *
+ * We chose a warm amber/orange primary because this product is about
+ * bringing OLD photos to life — colorizing black-and-white images. The warm
+ * amber tone evokes nostalgia, warmth, and the golden age of photography.
+ * It also stands out sharply from clone-1's violet palette, giving each
+ * clone a distinct visual identity.
+ *
+ * The gradient system uses amber-to-orange which evokes sunset, warmth,
+ * and the "coming alive" feeling that perfectly matches the product
+ * promise of turning dull B&W photos into vibrant, colorful memories.
+ *
+ * Color psychology: Orange/amber = warmth, creativity, enthusiasm, joy.
+ * These are exactly the emotions we want users to feel when they see their
+ * old family photos come alive with realistic color.
+ *
+ * SEO target keyword: "colorize photo free"
+ * Pricing: Free tier (3/day) + Pro ($9.99/mo unlimited)
+ *
+ * The hue angle 65 in OKLCH corresponds to warm amber/orange territory,
+ * which we use throughout the light and dark mode palettes.
+ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(0.99 0.005 65);
+  --foreground: oklch(0.13 0.03 65);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.03 65);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.03 65);
+  /* Warm amber primary — evokes nostalgia and warmth, perfect for photo
+     colorization which is all about bringing old memories back to life.
+     Hue 65 in OKLCH is a rich, warm amber that feels inviting. */
+  --primary: oklch(0.60 0.18 65);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.015 65);
+  --secondary-foreground: oklch(0.25 0.05 65);
+  --muted: oklch(0.96 0.008 65);
+  --muted-foreground: oklch(0.50 0.03 65);
+  --accent: oklch(0.94 0.04 65);
+  --accent-foreground: oklch(0.25 0.05 65);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.008 65);
+  --input: oklch(0.92 0.008 65);
+  --ring: oklch(0.60 0.18 65);
+  --chart-1: oklch(0.60 0.18 65);
+  --chart-2: oklch(0.65 0.16 45);
+  --chart-3: oklch(0.55 0.14 85);
+  --chart-4: oklch(0.70 0.15 30);
+  --chart-5: oklch(0.50 0.12 100);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.60 0.18 65);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.60 0.18 65);
+}
+
+.dark {
+  --background: oklch(0.12 0.03 65);
+  --foreground: oklch(0.96 0.015 65);
+  --card: oklch(0.17 0.035 65);
+  --card-foreground: oklch(0.96 0.015 65);
+  --popover: oklch(0.17 0.035 65);
+  --popover-foreground: oklch(0.96 0.015 65);
+  --primary: oklch(0.72 0.17 65);
+  --primary-foreground: oklch(0.12 0.03 65);
+  --secondary: oklch(0.22 0.04 65);
+  --secondary-foreground: oklch(0.96 0.015 65);
+  --muted: oklch(0.22 0.04 65);
+  --muted-foreground: oklch(0.65 0.05 65);
+  --accent: oklch(0.22 0.04 65);
+  --accent-foreground: oklch(0.96 0.015 65);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.17 65);
+  --chart-1: oklch(0.72 0.17 65);
+  --chart-2: oklch(0.75 0.14 45);
+  --chart-3: oklch(0.60 0.12 85);
+  --chart-4: oklch(0.80 0.13 30);
+  --chart-5: oklch(0.55 0.10 100);
+  --sidebar: oklch(0.17 0.035 65);
+  --sidebar-foreground: oklch(0.96 0.015 65);
+  --sidebar-primary: oklch(0.72 0.17 65);
+  --sidebar-primary-foreground: oklch(0.96 0.015 65);
+  --sidebar-accent: oklch(0.22 0.04 65);
+  --sidebar-accent-foreground: oklch(0.96 0.015 65);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.72 0.17 65);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+}
+
+/**
+ * CUSTOM UTILITY CLASSES — ColorizeAI
+ *
+ * These utility classes power the hero gradient, the animated background
+ * pattern, and the before/after comparison view used in the image preview.
+ *
+ * The gradient uses amber-to-orange hues to reinforce the warm, nostalgic
+ * brand identity. When users see the gradient text in the hero, it should
+ * feel like "warmth coming to life" — matching the product promise of
+ * bringing old black-and-white photos back to vibrant color.
+ *
+ * The grayscale-to-color pattern is unique to this clone — it visually
+ * demonstrates the product by showing a B&W to color transition effect,
+ * which is much more compelling than the checkerboard pattern used by
+ * the background remover clone.
+ */
+
+@layer utilities {
+  /* Animated gradient text — warm amber-to-orange for the hero heading.
+     Uses hue 65 (amber) transitioning through hue 45 (orange) and back,
+     creating a shimmering "golden warmth" effect. */
+  .gradient-text {
+    background: linear-gradient(135deg, oklch(0.60 0.18 65), oklch(0.65 0.20 45), oklch(0.60 0.18 65));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 4s ease infinite;
+  }
+
+  /* Grayscale background pattern — used on the "before" side of the
+     comparison view to indicate the original B&W photo. This is the
+     visual equivalent of the checkerboard in clone-1, but adapted for
+     the colorization use case where we show "before = gray, after = color". */
+  .grayscale-preview-bg {
+    background-color: #f0f0f0;
+    background-image:
+      linear-gradient(135deg, #e8e8e8 25%, transparent 25%),
+      linear-gradient(225deg, #e8e8e8 25%, transparent 25%),
+      linear-gradient(45deg, #e8e8e8 25%, transparent 25%),
+      linear-gradient(315deg, #e8e8e8 25%, transparent 25%);
+    background-size: 24px 24px;
+    background-position: 12px 0, 12px 0, 0 0, 0 0;
+  }
+
+  /* Subtle animated background dots — warm amber tint for the hero section.
+     The amber-tinted dots reinforce the warm brand identity throughout the
+     page, making it feel cohesive and intentional. */
+  .hero-pattern {
+    background-image: radial-gradient(circle at 1px 1px, oklch(0.60 0.18 65 / 0.08) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
