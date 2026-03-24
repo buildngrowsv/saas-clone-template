@@ -1,12 +1,12 @@
 /**
- * PostCSS configuration — Tailwind CSS 4 plugin.
- *
- * WHY THIS FILE:
- * Tailwind CSS 4 uses a PostCSS plugin (@tailwindcss/postcss) instead of
- * the separate tailwindcss CLI or the older PostCSS plugin from v3.
- * This is the minimal config needed — Tailwind v4 auto-discovers your
- * content files and CSS config from globals.css.
+ * PostCSS Configuration
+ * 
+ * WHY: Tailwind CSS 4 uses @tailwindcss/postcss as its PostCSS plugin
+ * (replacing the old tailwindcss plugin). This is the standard setup
+ * recommended by the Tailwind 4 docs.
  */
+
+/** @type {import('postcss-load-config').Config} */
 const config = {
   plugins: {
     "@tailwindcss/postcss": {},

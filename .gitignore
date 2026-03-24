@@ -2,19 +2,34 @@
 node_modules/
 .pnp
 .pnp.js
-.yarn/install-state.gz
 
-# Next.js
+# Build output
 .next/
 out/
 build/
+dist/
 
-# Environment files (NEVER commit these — they contain secrets)
+# Environment variables — NEVER commit these
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
 
 # Vercel
 .vercel
@@ -23,24 +38,8 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Testing
+coverage/
 
-# OS files
-.DS_Store
-*.pem
-Thumbs.db
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Drizzle migrations output
-drizzle/
-
-# Temporary files
+# Temp files
 tmp/

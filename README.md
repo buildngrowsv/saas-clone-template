@@ -1,180 +1,96 @@
-# SaaS Clone Template
+# SaaS Clone Template — AI Tool Wrapper
 
-Production-ready SaaS boilerplate with authentication, payments, database, file storage, and a credits-based billing system. Built with the latest stack: **Next.js 16 + React 19 + Tailwind CSS 4 + shadcn/ui**.
+A production-ready Next.js 15 template for building AI tool SaaS products. Includes authentication, payments, credit system, and fal.ai integration out of the box.
 
-## What's Included
+## What This Template Includes
 
-| Feature | Implementation |
-|---------|---------------|
-| **Authentication** | Better Auth with Google OAuth, session management, middleware protection |
-| **Payments** | Stripe Checkout (subscriptions + one-time packs), webhook handler, customer management |
-| **Database** | Neon Postgres (serverless) + Drizzle ORM with type-safe queries |
-| **File Storage** | Cloudflare R2 with presigned upload URLs (direct client-to-storage) |
-| **Credits System** | Usage-based billing with transaction audit log, atomic deductions |
-| **UI Components** | shadcn/ui (14 components), dark/light theme, responsive design |
-| **Landing Page** | Hero, features grid, value props, pricing preview, FAQ, testimonials, final CTA |
-| **Dashboard** | Credit balance, plan display, quick actions |
-| **Pricing Page** | Subscription plans, credit packs, Stripe Checkout integration |
-| **SEO** | JSON-LD structured data, meta tags, sitemap-ready, robots.txt |
-| **Config-Driven** | All branding in `site.ts`, all product config in `product.ts` |
+- **Next.js 15** with App Router and TypeScript
+- **Tailwind CSS 4** with dark theme and glassmorphism design
+- **NextAuth** with Google OAuth
+- **Stripe** subscription billing (Free / Basic $4.99 / Pro $9.99)
+- **fal.ai** serverless AI inference
+- **Credit system** with per-tier limits (3/day free, 50/month basic, unlimited pro)
+- **Marketing-polished landing page** with hero, pricing, FAQ, footer
 
-## Quick Start
+## Quick Start — Clone a New AI Tool
 
-### 1. Clone and install
+1. **Copy this template:**
+   ```bash
+   cp -r saas-clone-template/ my-new-ai-tool/
+   cd my-new-ai-tool/
+   ```
 
-```bash
-git clone https://github.com/your-username/saas-clone-template.git my-saas
-cd my-saas
-npm install
-```
+2. **Update product config** — edit `src/lib/config.ts`:
+   - Change `name`, `tagline`, `description`
+   - Set `falModelIdentifier` to your fal.ai model
+   - Adjust pricing if needed
 
-### 2. Set up environment variables
+3. **Customize the generation route** — edit `src/app/api/generate/route.ts`:
+   - Update the fal.ai input parameters for your model
+   - Update the result extraction logic if the model returns differently
 
-```bash
-cp .env.example .env.local
-# Edit .env.local with your service credentials
-```
+4. **Set environment variables** — copy `.env.example` to `.env.local` and fill in:
+   - Google OAuth credentials
+   - Stripe API keys and Price IDs
+   - fal.ai API key
+   - NextAuth secret
 
-### 3. Set up external services
+5. **Install and run:**
+   ```bash
+   npm install
+   npm run dev
+   ```
+   Open http://localhost:4837
 
-**Neon Postgres:**
-1. Create a project at [neon.tech](https://neon.tech)
-2. Copy the pooled connection string to `DATABASE_URL`
+6. **Deploy to Vercel:**
+   ```bash
+   npx vercel
+   ```
 
-**Google OAuth:**
-1. Go to [Google Cloud Console](https://console.cloud.google.com) > APIs & Services > Credentials
-2. Create an OAuth 2.0 Client ID (Web application)
-3. Add redirect URI: `http://localhost:4738/api/auth/callback/google`
-4. Copy Client ID and Secret to `.env.local`
-
-**Stripe:**
-1. Create an account at [stripe.com](https://stripe.com)
-2. Copy Secret Key to `STRIPE_SECRET_KEY`
-3. Run `npm run stripe:setup` to create products and prices
-4. Copy the output price IDs to `.env.local`
-5. For local webhooks: `stripe listen --forward-to localhost:4738/api/stripe/webhook`
-6. Copy the webhook secret to `STRIPE_WEBHOOK_SECRET`
-
-**Cloudflare R2** (optional — only needed if your product uses file uploads):
-1. Create an R2 bucket in the Cloudflare dashboard
-2. Create an API token with read/write permissions
-3. Set R2 env vars in `.env.local`
-
-### 4. Push database schema
-
-```bash
-npm run db:push
-```
-
-### 5. Run the dev server
-
-```bash
-npm run dev
-# Open http://localhost:4738
-```
-
-## Customization
-
-### Rebrand the app
-
-Edit two files:
-
-- **`src/config/site.ts`** — Brand name, colors, description, URLs, navigation, footer
-- **`src/config/product.ts`** — Pricing plans, credit packs, features, FAQ, testimonials
-
-The entire app reads from these configs. No need to find-and-replace across files.
-
-### Change the color scheme
-
-The `themeColors` object in `site.ts` controls all brand colors (gradients, accents, badges). Change it to match your brand:
-
-```typescript
-themeColors: {
-  gradientFrom: "from-emerald-400",
-  gradientVia: "via-teal-500",
-  gradientTo: "to-emerald-600",
-  // ... etc
-}
-```
-
-### Add product features
-
-1. Create your product pages in `src/app/(main)/your-feature/`
-2. Add API routes in `src/app/api/your-feature/`
-3. Use `deductCredits()` from `src/lib/credits.ts` for billable actions
-4. Update `ACTION_CREDIT_COSTS` in `src/config/product.ts`
-
-### Add more auth providers
-
-1. Add the provider to `src/lib/auth.ts` > `socialProviders`
-2. Set the provider's env vars
-3. Add a sign-in button in `src/app/login/page.tsx`
-
-## Architecture
+## File Structure
 
 ```
 src/
-├── app/                          # Next.js App Router
-│   ├── layout.tsx                # Root layout (fonts, theme, SEO)
-│   ├── globals.css               # Tailwind + shadcn theme variables
-│   ├── login/                    # Auth pages (no header/footer)
-│   ├── (main)/                   # Route group with header/footer
-│   │   ├── page.tsx              # Landing page
-│   │   ├── pricing/page.tsx      # Full pricing page
-│   │   └── dashboard/page.tsx    # User dashboard
-│   └── api/
-│       ├── auth/[...all]/        # Better Auth handler
-│       ├── stripe/               # Checkout + webhook
-│       ├── upload/               # R2 presigned URLs
-│       └── dashboard/            # Dashboard data API
-├── components/
-│   ├── layout/                   # Header, Footer
-│   └── ui/                       # shadcn/ui components
-├── config/
-│   ├── site.ts                   # Branding, colors, URLs
-│   └── product.ts                # Pricing, features, FAQ
-├── db/
-│   ├── index.ts                  # Drizzle client (lazy singleton)
-│   └── schema/                   # Database tables
-├── lib/
-│   ├── auth.ts                   # Better Auth server config
-│   ├── auth-client.ts            # Better Auth React client
-│   ├── stripe.ts                 # Stripe client (lazy singleton)
-│   ├── credits.ts                # Credit management utilities
-│   ├── r2.ts                     # Cloudflare R2 client
-│   └── utils.ts                  # shadcn cn() utility
-└── middleware.ts                  # Route protection
+  app/
+    page.tsx                    # Landing page
+    layout.tsx                  # Root layout with auth provider
+    dashboard/page.tsx          # Tool interface (upload → process → download)
+    api/
+      auth/[...nextauth]/       # NextAuth OAuth handler
+      stripe/checkout/           # Stripe checkout session creation
+      stripe/webhook/            # Stripe webhook handler
+      generate/                  # AI generation endpoint (customize this)
+  lib/
+    config.ts                   # Product configuration (customize this)
+    auth.ts                     # NextAuth options
+    stripe.ts                   # Stripe client
+    credits.ts                  # Credit/usage tracking
+  components/
+    AuthSessionProvider.tsx     # NextAuth client provider wrapper
+    LandingHero.tsx            # Hero section
+    LandingDemoSection.tsx     # Before/after demo area
+    LandingFaqSection.tsx      # FAQ accordion
+    LandingFooter.tsx          # Footer with legal links
+    PricingCards.tsx            # 3-tier pricing cards
+    UploadZone.tsx             # Drag-and-drop file upload
+    ResultDisplay.tsx          # Before/after result comparison
 ```
 
-## Key Design Decisions
+## Customization Checklist
 
-- **Lazy singletons** — All env-dependent clients (DB, Stripe, R2, Auth) use lazy initialization via Proxy to avoid build-time crashes
-- **Credits over feature gates** — More flexible billing that scales with usage
-- **Presigned uploads** — Files go directly to R2, never through serverless functions
-- **Config-driven branding** — Rebrand the entire app by editing two config files
-- **Copious comments** — Every file explains what, why, and how for future developers and AI agents
+- [ ] Edit `src/lib/config.ts` — product name, tagline, fal.ai model
+- [ ] Edit `src/app/api/generate/route.ts` — model-specific parameters
+- [ ] Add demo images to `public/demo-before.png` and `public/demo-after.png`
+- [ ] Create Stripe products/prices and set env vars
+- [ ] Create Google OAuth credentials and set env vars
+- [ ] Get fal.ai API key and set env var
+- [ ] Add Terms of Service page (`src/app/terms/page.tsx`)
+- [ ] Add Privacy Policy page (`src/app/privacy/page.tsx`)
+- [ ] Add favicon and Open Graph image to `public/`
+- [ ] Deploy to Vercel
 
-## Tech Stack
+## Dev Server
 
-- **Framework**: Next.js 16 (App Router)
-- **UI**: React 19 + Tailwind CSS 4 + shadcn/ui (New York style)
-- **Auth**: Better Auth + Google OAuth
-- **Payments**: Stripe (Checkout + Webhooks)
-- **Database**: Neon Postgres + Drizzle ORM
-- **Storage**: Cloudflare R2 (S3-compatible)
-- **Deployment**: Vercel (optimized with vercel.json)
-- **Dev Port**: 4738
-
-## Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start dev server on port 4738 |
-| `npm run build` | Production build |
-| `npm run start` | Start production server |
-| `npm run db:push` | Push schema to database (dev) |
-| `npm run db:generate` | Generate migration SQL files |
-| `npm run db:migrate` | Run pending migrations |
-| `npm run stripe:setup` | Create Stripe products/prices |
-| `npm run env:validate` | Check all env vars are set |
-| `npm run lint` | Run ESLint |
+```bash
+npm run dev    # Starts on port 4837
+```

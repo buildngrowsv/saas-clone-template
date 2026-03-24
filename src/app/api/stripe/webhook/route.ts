@@ -1,225 +1,200 @@
 /**
- * POST /api/stripe/webhook
- *
- * Handles Stripe webhook events for the complete subscription and payment lifecycle.
- *
+ * Stripe Webhook Handler — POST /api/stripe/webhook
+ * 
  * WHY WEBHOOKS:
- * Stripe webhooks are the ONLY reliable way to handle payment events. You can't
- * rely on the checkout success_url redirect because:
- * 1. The user might close the browser before the redirect
- * 2. Payment processing can take seconds (3D Secure, bank transfers)
- * 3. Subscription renewals happen automatically with no user interaction
- *
- * Webhooks guarantee that every payment event is processed, even if the user
- * disconnects. Stripe retries failed webhook deliveries for up to 3 days.
- *
- * EVENTS HANDLED:
- * - checkout.session.completed → Allocate credits for one-time pack purchases
- * - customer.subscription.created → Create/update subscription record
- * - customer.subscription.updated → Sync subscription status changes
- * - customer.subscription.deleted → Cancel subscription, downgrade to free plan
- * - invoice.payment_succeeded → Monthly credit allocation for active subscriptions
- *
+ * Stripe uses webhooks to notify us about payment events asynchronously.
+ * We can't rely on the checkout success redirect alone because:
+ *   1. Users might close the browser before the redirect
+ *   2. Network issues could prevent the redirect
+ *   3. Subscription renewals happen monthly with no user interaction
+ *   4. Cancellations and failed payments need to be handled
+ * 
+ * Webhooks are the ONLY reliable way to know about payment state changes.
+ * This is why Stripe requires webhook handling for any production integration.
+ * 
+ * EVENTS WE HANDLE:
+ * - checkout.session.completed — User completed payment, activate subscription
+ * - customer.subscription.updated — Plan change, renewal, or payment method update
+ * - customer.subscription.deleted — Subscription cancelled or expired
+ * 
  * SECURITY:
- * Every webhook request is verified using Stripe's webhook signing secret.
- * This prevents attackers from sending fake events to credit themselves.
- * The signature verification uses the raw request body (not parsed JSON)
- * because JSON parsing can change the byte order which breaks the signature.
- *
- * IMPORTANT: This route must be public in middleware.ts (no auth required).
- * Stripe sends webhooks directly — there's no user session involved.
- *
- * SETUP:
- * 1. In Stripe Dashboard > Developers > Webhooks, create an endpoint
- * 2. URL: https://yourdomain.com/api/stripe/webhook
- * 3. Select events: checkout.session.completed, customer.subscription.*,
- *    invoice.payment_succeeded
- * 4. Copy the signing secret (whsec_xxx) to STRIPE_WEBHOOK_SECRET in .env.local
- *
- * CREDIT ALLOCATION:
- * Credit amounts for plans and packs are defined in src/config/product.ts
- * (PLAN_CREDITS_ALLOCATION and PACK_CREDITS_ALLOCATION). Keep those in sync
- * with what you display on the pricing page.
+ * Every webhook payload is verified using the STRIPE_WEBHOOK_SECRET.
+ * This prevents attackers from sending fake events to our endpoint
+ * to give themselves free subscriptions.
+ * 
+ * TODO (PRODUCTION):
+ * Replace the console.log subscription updates with actual database writes.
+ * The template logs events for demonstration — in production, you'd update
+ * the user's subscription status in your database.
  */
+
 import { NextRequest, NextResponse } from "next/server";
+import { stripeServerClient } from "@/lib/stripe";
 import Stripe from "stripe";
-import { db } from "@/db";
-import { userProfiles } from "@/db/schema/users";
-import { subscriptions } from "@/db/schema/subscriptions";
-import { eq } from "drizzle-orm";
-import { addCredits } from "@/lib/credits";
-import { getStripe } from "@/lib/stripe";
-import {
-  PLAN_CREDITS_ALLOCATION,
-  PACK_CREDITS_ALLOCATION,
-} from "@/config/product";
 
+/**
+ * WHY we read the raw body:
+ * Stripe webhook verification requires the raw request body (not parsed JSON).
+ * If we let Next.js parse it first, the signature verification will fail because
+ * the parsed-then-re-stringified body won't match the original byte-for-byte.
+ */
 export async function POST(request: NextRequest) {
-  const stripe = getStripe();
-  const body = await request.text();
-
-  /**
-   * STEP 1: Validate the Stripe signature header.
-   * If the header is missing, this isn't a real Stripe webhook — reject immediately.
-   */
-  const signature = request.headers.get("stripe-signature");
-  if (!signature) {
-    return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 401 });
-  }
-
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.error("[stripe/webhook] STRIPE_WEBHOOK_SECRET env var is not set");
-    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
-  }
-
-  /**
-   * STEP 2: Verify the webhook signature.
-   * This cryptographically proves the event came from Stripe and wasn't tampered with.
-   * Uses the raw body text (not parsed JSON) because parsing can alter byte order.
-   */
-  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (error) {
-    console.error("[stripe/webhook] Signature verification failed:", error);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-  }
+    const rawRequestBody = await request.text();
+    const stripeSignatureHeader = request.headers.get("stripe-signature");
 
-  /**
-   * STEP 3: Handle the event based on type.
-   * Each case handles a specific Stripe event and performs the corresponding
-   * database operations (credit allocation, subscription sync, etc.).
-   */
-  switch (event.type) {
-    case "checkout.session.completed": {
-      /**
-       * A checkout session was completed — the user paid successfully.
-       * For subscriptions, we handle credits on invoice.payment_succeeded instead.
-       * For one-time payments (credit packs), we allocate credits here.
-       */
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId;
-      if (!userId) break;
+    if (!stripeSignatureHeader) {
+      return NextResponse.json(
+        { error: "Missing stripe-signature header" },
+        { status: 400 }
+      );
+    }
 
-      if (session.mode === "payment") {
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error("STRIPE_WEBHOOK_SECRET is not configured");
+      return NextResponse.json(
+        { error: "Webhook secret not configured" },
+        { status: 500 }
+      );
+    }
+
+    /**
+     * Verify the webhook signature.
+     * This ensures the event actually came from Stripe and wasn't forged.
+     * If verification fails, constructEvent throws an error.
+     */
+    let verifiedStripeEvent: Stripe.Event;
+
+    try {
+      verifiedStripeEvent = stripeServerClient.webhooks.constructEvent(
+        rawRequestBody,
+        stripeSignatureHeader,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (signatureVerificationError) {
+      console.error(
+        "Webhook signature verification failed:",
+        signatureVerificationError
+      );
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 400 }
+      );
+    }
+
+    /**
+     * Route the event to the appropriate handler based on event type.
+     * Each handler is responsible for updating the user's subscription state.
+     */
+    switch (verifiedStripeEvent.type) {
+      case "checkout.session.completed": {
         /**
-         * One-time credit pack purchase.
-         * We look up the pack type from the Stripe Price metadata to determine
-         * how many credits to allocate. The pack_type metadata is set when
-         * creating prices in Stripe Dashboard.
+         * CHECKOUT COMPLETED — The user successfully paid.
+         * 
+         * This is the most important event — it means we have a new subscriber.
+         * We extract the user email and tier from the session metadata
+         * (which we set when creating the checkout session in the checkout route).
+         * 
+         * TODO (PRODUCTION): Write subscription record to database:
+         *   await db.insert(subscriptions).values({
+         *     userEmail: metadata.userEmail,
+         *     tier: metadata.subscriptionTier,
+         *     stripeCustomerId: checkoutSession.customer,
+         *     stripeSubscriptionId: checkoutSession.subscription,
+         *     status: 'active',
+         *   });
          */
-        const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-        const priceId = lineItems.data[0]?.price?.id;
-        if (priceId) {
-          const price = await stripe.prices.retrieve(priceId);
-          const packType = (price.metadata?.pack_type || "starter") as string;
-          const credits = PACK_CREDITS_ALLOCATION[packType] || 1000;
-          await addCredits(userId, credits, `pack_purchase:${packType}`);
-        }
+        const completedCheckoutSession = verifiedStripeEvent.data
+          .object as Stripe.Checkout.Session;
+        const checkoutMetadata = completedCheckoutSession.metadata;
+
+        console.log(
+          `[Stripe Webhook] Checkout completed for ${checkoutMetadata?.userEmail} — Tier: ${checkoutMetadata?.subscriptionTier}`
+        );
+        console.log(
+          `[Stripe Webhook] Stripe Customer ID: ${completedCheckoutSession.customer}`
+        );
+        console.log(
+          `[Stripe Webhook] Stripe Subscription ID: ${completedCheckoutSession.subscription}`
+        );
+
+        break;
       }
-      break;
-    }
 
-    case "customer.subscription.created":
-    case "customer.subscription.updated": {
-      /**
-       * Subscription created or updated — sync state to our database.
-       * Uses upsert (INSERT ... ON CONFLICT DO UPDATE) so both events
-       * can be handled by the same code path.
-       *
-       * The plan slug is read from the Price metadata (e.g., { plan: "standard" }).
-       * This metadata must be set when creating prices in Stripe Dashboard.
-       */
-      const sub = event.data.object as Stripe.Subscription;
-      const userId = sub.metadata?.userId;
-      if (!userId) break;
+      case "customer.subscription.updated": {
+        /**
+         * SUBSCRIPTION UPDATED — Could be a plan change, renewal, or status change.
+         * 
+         * WHY we handle this: When a subscription renews, Stripe sends this event
+         * with the updated billing period. When a user changes plans (upgrade/downgrade),
+         * this event contains the new plan details. We need to update our records
+         * to reflect the current state.
+         * 
+         * TODO (PRODUCTION): Update subscription in database:
+         *   await db.update(subscriptions)
+         *     .set({ status: updatedSubscription.status, ... })
+         *     .where(eq(subscriptions.stripeSubscriptionId, updatedSubscription.id));
+         */
+        const updatedSubscription = verifiedStripeEvent.data
+          .object as Stripe.Subscription;
 
-      const plan = (sub.items.data[0]?.price?.metadata?.plan || "basic") as string;
+        console.log(
+          `[Stripe Webhook] Subscription updated: ${updatedSubscription.id} — Status: ${updatedSubscription.status}`
+        );
 
-      await db
-        .insert(subscriptions)
-        .values({
-          userId,
-          stripeSubscriptionId: sub.id,
-          plan,
-          status: sub.status,
-          currentPeriodEnd: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000),
-        })
-        .onConflictDoUpdate({
-          target: subscriptions.stripeSubscriptionId,
-          set: {
-            plan,
-            status: sub.status,
-            currentPeriodEnd: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000),
-            updatedAt: new Date(),
-          },
-        });
-
-      /**
-       * Also update the user's plan in user_profiles for quick lookups.
-       * This avoids joining to the subscriptions table for simple plan checks.
-       */
-      await db
-        .update(userProfiles)
-        .set({ plan, updatedAt: new Date() })
-        .where(eq(userProfiles.userId, userId));
-
-      break;
-    }
-
-    case "customer.subscription.deleted": {
-      /**
-       * Subscription canceled — downgrade user to free plan.
-       * The user may still have credits from their last allocation,
-       * which they can continue to use until depleted.
-       */
-      const sub = event.data.object as Stripe.Subscription;
-      const userId = sub.metadata?.userId;
-      if (!userId) break;
-
-      await db
-        .update(subscriptions)
-        .set({ status: "canceled", updatedAt: new Date() })
-        .where(eq(subscriptions.stripeSubscriptionId, sub.id));
-
-      await db
-        .update(userProfiles)
-        .set({ plan: "free", updatedAt: new Date() })
-        .where(eq(userProfiles.userId, userId));
-
-      break;
-    }
-
-    case "invoice.payment_succeeded": {
-      /**
-       * Monthly subscription renewal — allocate credits.
-       *
-       * This fires on every successful invoice payment, including the first one.
-       * For subscriptions, this is where we give the user their monthly credits.
-       * We check that this is a subscription invoice (not a one-time payment)
-       * by verifying the invoice has a subscription field.
-       */
-      const invoice = event.data.object as Stripe.Invoice & { subscription?: string };
-      if (invoice.subscription) {
-        const sub = await stripe.subscriptions.retrieve(invoice.subscription);
-        const userId = sub.metadata?.userId;
-        if (userId) {
-          const plan = (sub.items.data[0]?.price?.metadata?.plan || "basic") as string;
-          const credits = PLAN_CREDITS_ALLOCATION[plan] || 500;
-          await addCredits(userId, credits, `subscription_renewal:${plan}`);
-        }
+        break;
       }
-      break;
+
+      case "customer.subscription.deleted": {
+        /**
+         * SUBSCRIPTION DELETED — The subscription has ended.
+         * 
+         * This fires when:
+         *   - User cancels and the period expires
+         *   - Payment fails repeatedly and Stripe gives up
+         *   - We manually cancel from the Stripe dashboard
+         * 
+         * We need to downgrade the user to the free tier.
+         * 
+         * TODO (PRODUCTION): Downgrade user in database:
+         *   await db.update(subscriptions)
+         *     .set({ status: 'cancelled', tier: 'free' })
+         *     .where(eq(subscriptions.stripeSubscriptionId, deletedSubscription.id));
+         */
+        const deletedSubscription = verifiedStripeEvent.data
+          .object as Stripe.Subscription;
+
+        console.log(
+          `[Stripe Webhook] Subscription deleted: ${deletedSubscription.id} — User downgraded to free tier`
+        );
+
+        break;
+      }
+
+      default: {
+        /**
+         * Unhandled event types — we log them but don't error.
+         * Stripe sends many event types we don't care about (invoice.created,
+         * payment_intent.succeeded, etc.). Returning 200 for unhandled events
+         * prevents Stripe from retrying them.
+         */
+        console.log(
+          `[Stripe Webhook] Unhandled event type: ${verifiedStripeEvent.type}`
+        );
+      }
     }
+
+    /**
+     * Always return 200 to acknowledge receipt.
+     * If we return an error, Stripe will retry the event (up to 3 days),
+     * which could cause duplicate processing.
+     */
+    return NextResponse.json({ received: true });
+  } catch (webhookProcessingError) {
+    console.error("Webhook processing error:", webhookProcessingError);
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 500 }
+    );
   }
-
-  /**
-   * Always return 200 OK to Stripe, even for unhandled events.
-   * Returning non-200 causes Stripe to retry, which is wasteful for events we don't care about.
-   */
-  return NextResponse.json({ received: true });
 }
