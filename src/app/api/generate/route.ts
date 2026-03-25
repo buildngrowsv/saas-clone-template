@@ -38,22 +38,146 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { PRODUCT_CONFIG } from "@/lib/config";
 import {
   checkUserCreditAvailability,
   deductOneCreditForUser,
   type SubscriptionTier,
 } from "@/lib/credits";
-import * as fal from "@fal-ai/client";
+import { createFalClient } from "@fal-ai/client";
+
+// =============================================================================
+// SERVER-SIDE IP RATE LIMITING (Clone Factory Quality Gate 7)
+// =============================================================================
+/**
+ * IP-based rate limiter: module-level Map that persists across requests within
+ * the same warm Vercel serverless instance. Cold starts reset the Map, but
+ * that is acceptable — an attacker forcing cold starts can only bypass the
+ * limit at a rate of FREE_GENERATIONS_PER_IP_PER_DAY per cold start, which
+ * still limits throughput and spend significantly vs zero protection.
+ *
+ * WHY THIS EXISTS EVEN THOUGH THE TEMPLATE HAS AUTH+CREDITS:
+ * Two reasons:
+ *   1. Lightweight clones derived from this template often strip auth to ship
+ *      faster. Those clones inherit this IP gate as their server-side backstop.
+ *      Without it, any clone that removes auth has ZERO server-side protection
+ *      and will drain FAL_KEY credits freely.
+ *   2. Defense in depth: a logged-in user creating throwaway accounts can
+ *      drain credits faster than the credit system alone catches. IP limiting
+ *      adds friction to that path.
+ *
+ * This satisfies clone-factory-quality-gates.md Gate 7: "documented backend
+ * rate limit that matches the business model" — required before any hosted
+ * paid vendor call.
+ *
+ * PRODUCTION SCALING NOTE: For multi-instance or high-traffic deployments,
+ * replace this Map with Vercel KV or Upstash Redis to share state across
+ * instances. The in-memory Map is sufficient for launch traffic (single warm
+ * instance handles most early-stage products).
+ */
+const ipRateLimitMap = new Map<string, { count: number; windowStartMs: number }>();
 
 /**
- * Configure the fal.ai client with our API key.
- * This runs once when the module is first imported.
+ * How many free AI generations to allow per unique IP per 24-hour window.
+ * This number should match the free-tier UX messaging shown to users so the
+ * server-side gate and the client-side display stay consistent.
+ *
+ * CUSTOMIZE PER CLONE: Some products may warrant more (e.g., a simple
+ * text tool: 10/day) or fewer (e.g., expensive video gen: 1/day).
  */
-fal.config({
-  credentials: process.env.FAL_KEY,
+const FREE_GENERATIONS_PER_IP_PER_DAY = 3;
+
+/**
+ * 24-hour rolling rate limit window in milliseconds.
+ * After this duration elapses, the IP's counter resets and they receive
+ * another FREE_GENERATIONS_PER_IP_PER_DAY free generations.
+ */
+const IP_RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Extract the real client IP from a Next.js request.
+ *
+ * Header priority order (most to least trustworthy on Vercel):
+ *   1. x-real-ip — set by Vercel's edge network; cannot be spoofed by clients
+ *   2. x-forwarded-for — comma-separated chain; take the leftmost (original client)
+ *   3. "unknown" — fallback for unit tests or local development
+ *
+ * We prefer x-real-ip because Vercel's edge sets it reliably and it is not
+ * injectable by the client. x-forwarded-for CAN be spoofed if not behind
+ * Vercel's edge, so it is treated as a fallback only.
+ */
+function extractClientIp(request: NextRequest): string {
+  const xRealIp = request.headers.get("x-real-ip");
+  if (xRealIp) return xRealIp.trim();
+
+  const xForwardedFor = request.headers.get("x-forwarded-for");
+  if (xForwardedFor) {
+    // The leftmost entry in the comma-separated chain is the original client IP.
+    // Subsequent entries are proxies added along the forwarding path.
+    return xForwardedFor.split(",")[0].trim();
+  }
+
+  return "unknown";
+}
+
+/**
+ * Check whether the given IP address is within its free-tier quota for the
+ * current 24-hour window. Increments the counter if the request is allowed.
+ *
+ * Returns true if the request should proceed, false if it should be 429'd.
+ *
+ * Intentionally synchronous (no async/await) to keep the hot path under 1ms —
+ * rate limit checks should add negligible latency to request handling.
+ *
+ * Called BEFORE auth and BEFORE fal.ai to ensure over-limit requests
+ * cost nothing in compute or API credits.
+ */
+function checkIpRateLimit(ip: string): boolean {
+  const now = Date.now();
+
+  // Prune expired entries to prevent unbounded memory growth on warm instances.
+  // Inline pruning (vs a timer) is reliable in serverless where timers may not fire.
+  for (const [storedIp, record] of ipRateLimitMap.entries()) {
+    if (now - record.windowStartMs > IP_RATE_LIMIT_WINDOW_MS) {
+      ipRateLimitMap.delete(storedIp);
+    }
+  }
+
+  const existingRecord = ipRateLimitMap.get(ip);
+
+  // No record, or the existing window has expired → fresh window for this IP
+  if (!existingRecord || now - existingRecord.windowStartMs > IP_RATE_LIMIT_WINDOW_MS) {
+    ipRateLimitMap.set(ip, { count: 1, windowStartMs: now });
+    return true; // allowed
+  }
+
+  // Over the limit → deny without incrementing (counter stays at max)
+  if (existingRecord.count >= FREE_GENERATIONS_PER_IP_PER_DAY) {
+    return false; // denied
+  }
+
+  // Within limit → allow and increment
+  existingRecord.count += 1;
+  return true; // allowed
+}
+
+/**
+ * Create the fal.ai client with our API key.
+ *
+ * MIGRATION NOTE (2026-03-23):
+ * The fal.ai client SDK v1.2+ replaced the `fal.config()` + `fal.subscribe()`
+ * pattern with a `createFalClient()` factory. The old `import * as fal` and
+ * `fal.config({ credentials })` no longer exists. Instead, we create a client
+ * instance and call `client.subscribe()` on it.
+ *
+ * We use lazy initialization (empty string fallback) so that `next build`
+ * does not crash when FAL_KEY is absent. The actual API call will fail at
+ * runtime if the key is missing, which is handled by the try/catch below.
+ */
+const fal = createFalClient({
+  credentials: process.env.FAL_KEY || "",
 });
 
 /**
@@ -80,6 +204,47 @@ function getUserSubscriptionTier(_userEmail: string): SubscriptionTier {
 }
 
 export async function POST(request: NextRequest) {
+  // -------------------------------------------------------------------------
+  // P0 HARDENING: Server-side IP rate limit (runs BEFORE auth — fast reject)
+  // -------------------------------------------------------------------------
+  /**
+   * This is the FIRST check — before auth, before JSON parsing, before any
+   * fal.ai work. Over-limit requests are rejected here at ~0ms cost.
+   *
+   * Why before auth:
+   * - Even authenticated users should have per-IP limits to slow throwaway
+   *   account abuse.
+   * - Lightweight clones that strip auth rely ENTIRELY on this gate.
+   * - Rejecting early means over-limit requests cost nothing in auth DB lookups,
+   *   fal.ai credits, or server compute beyond this check.
+   *
+   * If you are building a clone WITHOUT auth (freemium, no login required),
+   * this IP gate is your ONLY server-side protection. Do NOT remove it.
+   * If you add Stripe + paid tier, grant a higher limit for paid users by
+   * checking their subscription before calling checkIpRateLimit, or exempt
+   * them from the check entirely after verifying their session.
+   */
+  const clientIp = extractClientIp(request);
+  if (!checkIpRateLimit(clientIp)) {
+    return NextResponse.json(
+      {
+        error:
+          "You've reached the free tier limit for today. Come back tomorrow " +
+          "for more free generations, or upgrade for unlimited access.",
+        upgradeUrl: "/#pricing",
+      },
+      {
+        status: 429,
+        headers: {
+          // Retry-After: seconds until the 24h window resets (conservative max)
+          "Retry-After": String(Math.ceil(IP_RATE_LIMIT_WINDOW_MS / 1000)),
+          "X-RateLimit-Limit": String(FREE_GENERATIONS_PER_IP_PER_DAY),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
   try {
     /**
      * Step 1: Authentication check.
@@ -87,7 +252,12 @@ export async function POST(request: NextRequest) {
      * so we MUST verify the user is authenticated. Anonymous users
      * should never reach this endpoint.
      */
-    const session = await getServerSession(authOptions);
+    /**
+     * MIGRATION NOTE: Changed from NextAuth's getServerSession(authOptions)
+     * to Better Auth's auth.api.getSession({ headers }). The Better Auth
+     * session returns { user: { id, email, name, image } } directly.
+     */
+    const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user?.email) {
       return NextResponse.json(
