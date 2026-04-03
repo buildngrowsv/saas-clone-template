@@ -14,8 +14,9 @@
  * The /terms and /privacy pages are placeholders. Each clone should create
  * actual legal pages (or use a generator like Termly/Iubenda).
  */
-
+import Link from "next/link";
 import { PRODUCT_CONFIG } from "@/lib/config";
+import { siteConfig } from "@/config/site";
 
 export function LandingFooter() {
   const currentYear = new Date().getFullYear();
@@ -33,29 +34,46 @@ export function LandingFooter() {
 
           {/* Legal links */}
           <div className="flex items-center gap-6 text-sm text-text-muted">
-            <a
-              href="/terms"
+            <Link
+              href="/terms-of-service"
               className="hover:text-text-secondary transition-colors"
             >
               Terms of Service
-            </a>
-            <a
-              href="/privacy"
+            </Link>
+            <Link
+              href="/privacy-policy"
               className="hover:text-text-secondary transition-colors"
             >
               Privacy Policy
-            </a>
-            <a
-              href="mailto:support@example.com"
+            </Link>
+            <Link
+              href="/refund-policy"
               className="hover:text-text-secondary transition-colors"
             >
-              Contact
-            </a>
+              Refund Policy
+            </Link>
+            {siteConfig.supportEmail && (
+              <a
+                href={`mailto:${siteConfig.supportEmail}`}
+                className="hover:text-text-secondary transition-colors"
+              >
+                Contact
+              </a>
+            )}
           </div>
 
-          {/* Copyright */}
+          {/* Copyright + Powered by */}
           <p className="text-sm text-text-muted">
             &copy; {currentYear} {PRODUCT_CONFIG.name}. All rights reserved.
+            {" · "}
+            <a
+              href="https://symplyai.io/tools/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-text-secondary transition-colors"
+            >
+              Powered by Symply AI
+            </a>
           </p>
         </div>
       </div>
