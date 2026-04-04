@@ -3,9 +3,11 @@
  *
  * HOW IT WORKS:
  * - Load the gtag.js script only after the page is interactive.
- * - Set consent default to 'denied' BEFORE gtag('config') — GDPR compliance.
- *   The CookieConsent component updates to 'granted' on user Accept.
- * - Initialize GA4 using NEXT_PUBLIC_GA_MEASUREMENT_ID.
+ * - Set consent default to 'denied' BEFORE gtag('config') — GDPR / Consent Mode stance.
+ *   `CookieConsentBanner` calls `gtag('consent', 'update', …)` on Accept (or replays from localStorage).
+ *   `wait_for_update` gives the client a short window to apply a stored choice before hits finalize.
+ * - Initialize GA4 using `getPublicGaMeasurementIdForClient()` (NEXT_PUBLIC_GA_MEASUREMENT_ID
+ *   or legacy NEXT_PUBLIC_GA_ID — see `ga4-public-env.ts`).
  * - Send page_view hits whenever the pathname changes.
  *
  * CONSENT ORDER (CRITICAL — T190, Builder 3, 2026-04-04):
@@ -22,6 +24,7 @@
 import { usePathname } from "next/navigation";
 import Script from "next/script";
 import { useEffect } from "react";
+import { getPublicGaMeasurementIdForClient } from "@/lib/ga4-public-env";
 
 type GoogleAnalyticsProps = {
   trackingId: string;
@@ -66,7 +69,16 @@ export function GoogleAnalytics({ trackingId }: GoogleAnalyticsProps) {
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){window.dataLayer.push(arguments);}
-          gtag("consent", "default", { analytics_storage: "denied" });
+          gtag("consent", "default", {
+            analytics_storage: "denied",
+            ad_storage: "denied",
+            ad_user_data: "denied",
+            ad_personalization: "denied",
+            personalization_storage: "denied",
+            functionality_storage: "granted",
+            security_storage: "granted",
+            wait_for_update: 500
+          });
           gtag("js", new Date());
           gtag("config", "${trackingId}");
         `}
@@ -76,7 +88,7 @@ export function GoogleAnalytics({ trackingId }: GoogleAnalyticsProps) {
 }
 
 export default function GoogleAnalyticsLoader() {
-  const trackingId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
+  const trackingId = getPublicGaMeasurementIdForClient();
 
   if (!trackingId) {
     return null;

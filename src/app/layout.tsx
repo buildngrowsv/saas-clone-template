@@ -8,7 +8,9 @@
  *   2. Load global CSS (Tailwind + our custom styles)
  *   3. Wrap everything in the NextAuth SessionProvider so any component
  *      can access the user's auth state via useSession()
- *   4. Set meta tags for SEO (title, description, Open Graph)
+ *   4. Load GA4 (Consent Mode) + cookie banner when `NEXT_PUBLIC_GA_MEASUREMENT_ID` or
+ *      `NEXT_PUBLIC_GA_ID` is set — see `CookieConsent` and `GoogleAnalytics`.
+ *   5. Set meta tags for SEO (title, description, Open Graph)
  * 
  * ARCHITECTURE NOTE:
  * The SessionProvider is a client component, but we keep the layout as a
@@ -20,6 +22,8 @@
 import type { Metadata } from "next";
 import { PRODUCT_CONFIG } from "@/lib/config";
 import { AuthSessionProvider } from "@/components/AuthSessionProvider";
+import { default as GoogleAnalyticsLoader } from "@/components/GoogleAnalytics";
+import { CookieConsent } from "@/components/CookieConsent";
 import "./globals.css";
 
 /**
@@ -61,6 +65,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
+        <GoogleAnalyticsLoader />
+        <CookieConsent />
         <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
     </html>

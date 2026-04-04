@@ -15,6 +15,7 @@
  */
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
+import { CookiePreferencesLink } from "@/components/CookiePreferencesLink";
 
 export function SiteFooter() {
   /**
@@ -69,6 +70,7 @@ export function SiteFooter() {
         <div className="mt-12 pt-8 border-t border-gray-800/60 text-center">
           <p className="text-xs text-gray-400">
             Copyright &copy; {currentYear} {siteConfig.siteName}. All rights reserved.
+            <CookiePreferencesLink />
             {" · "}
             <a
               href="https://symplyai.io/tools/"
