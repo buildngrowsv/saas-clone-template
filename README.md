@@ -89,6 +89,19 @@ src/
 - [ ] Add favicon and Open Graph image to `public/`
 - [ ] Deploy to Vercel
 
+## Ship quality, email, and compliance (clone factory)
+
+Before launch-ready language in marketing or **`STATUS.md`**, align with the holding-company and fleet gates:
+
+| Topic | Where |
+|-------|--------|
+| **Output quality & personas** | `docs/OUTPUT-QUALITY-MATRIX.md` (copy to child repo; customize §1–§2.1) |
+| **Eval assets** | `tests/evals/README.md` — golden prompts, rubric, gallery manifest |
+| **Transactional email (Resend)** | `docs/EMAIL-ONBOARDING-CHECKLIST.md` |
+| **Repo truth** | Root **`STATUS.md`** — links the above and current limitations |
+
+**Rules (UserRoot):** `clone-factory-quality-gates.md` · `ui-testing-and-launch-readiness.md` · `holding-company-email-deliverability.md` (via business-operations).
+
 ## Dev Server
 
 ```bash
