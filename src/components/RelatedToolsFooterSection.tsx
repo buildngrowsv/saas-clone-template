@@ -23,14 +23,20 @@
  * across the portfolio's strongest categories.
  */
 const DEFAULT_RELATED_TOOLS: RelatedTool[] = [
+  /* Tier 1 flagships — highest priority for cross-linking because they have
+     the best conversion paths and Google authority needs. GenFlix is NOT yet
+     indexed by Google (as of 2026-04-05) — every crawlable link helps.
+     banananano2pro IS indexed and drives backlink authority to the fleet.
+     Added: Forge-6103, 2026-04-05 (SEO internal linking audit). */
+  { name: "GenFlix AI Video", url: "https://genflix.symplyai.io" },
+  { name: "Banananano2Pro", url: "https://banananano2pro.com" },
   { name: "AI Logo Generator", url: "https://generateailogo.com" },
   { name: "AI Background Remover", url: "https://removebgapp.com" },
   { name: "AI Hairstyle Generator", url: "https://hairstyle.symplyai.io" },
   { name: "AI Cartoon Generator", url: "https://cartoon.symplyai.io" },
   { name: "AI Interior Design", url: "https://airoomredesigner.com" },
-  { name: "AI Face Swap", url: "https://faceswap.symplyai.io" },
   { name: "AI Tattoo Generator", url: "https://tattoo.symplyai.io" },
-  { name: "AI Product Photos", url: "https://aiproductphotomaker.com" },
+  { name: "All AI Tools", url: "https://symplyai.io/tools/" },
 ];
 
 export interface RelatedTool {
