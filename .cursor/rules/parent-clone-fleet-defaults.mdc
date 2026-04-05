@@ -1,0 +1,17 @@
+---
+description: Parent clone-fleet defaults — shared stack and business-memory routing for all sites in this template family.
+alwaysApply: false
+globs:
+  - "**/*"
+---
+
+# Parent — saas-clone-template (clone fleet)
+
+This repo is the **parent template** for Symply-style AI tool clones.
+
+- **Shared implementation** (Next.js patterns, paywall, cookie/GA4, deploy) belongs in shared roots and `docs/` — ship once, inherit everywhere.
+- **Child sites** live in subfolders like `clone-1-bg-remover/`. **Child-only** product rules belong in **that** folder's `.cursor/rules/` with `globs: **/*`, not in UserRoot.
+- **Standalone clone repos:** If a child directory is a **separate git repository** (contains its own `.git/`), it is not tracked as part of this parent repo. Commit `.cursor/rules/` **inside** that standalone repo (example: `Github/ai-background-remover/.cursor/rules/`). See `docs/CURSOR-RULES-NESTED-CHILD-REPOS.md`.
+- **Business memory** lives in `Github/business-operations/`. Parent: `businesses/saas-clone-template/`; nested child: `businesses/saas-clone-template/children/<slug>/`.
+
+Canonical architecture: `Github/business-operations/general-sops/BUSINESS-MEMORY-TREE-CURRENT-AND-TARGET-ARCHITECTURE.md` sections 8 and 2.5–2.6.
