@@ -16,6 +16,7 @@
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { CookiePreferencesLink } from "@/components/CookiePreferencesLink";
+import { RelatedToolsFooterSection } from "@/components/RelatedToolsFooterSection";
 
 export function SiteFooter() {
   /**
@@ -65,6 +66,11 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
+
+        {/* Cross-links to sibling AI tools — SEO internal linking (atlas-7842) */}
+        <RelatedToolsFooterSection
+          currentSiteUrl={siteConfig.siteUrl}
+        />
 
         {/* Copyright + Powered by */}
         <div className="mt-12 pt-8 border-t border-gray-800/60 text-center">
