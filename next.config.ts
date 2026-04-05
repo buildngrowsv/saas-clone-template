@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "v3.fal.media",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "**.fal.ai",
         pathname: "/**",
       },
