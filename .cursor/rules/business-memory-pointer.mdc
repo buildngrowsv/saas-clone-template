@@ -1,0 +1,13 @@
+---
+description: Clone fleet parent — business memory and per-child business repos
+globs: "**/*"
+alwaysApply: true
+---
+
+# SaaS clone template — business memory
+
+- **Parent business repo:** `Github/business-saas-clone-template` (`buildngrowsv/business-saas-clone-template`) with `children/<slug>/` per monetized SKU
+- **Standalone child business repos:** `Github/business-saas-clone-template-children-*` when split for git remotes
+- **Template:** `Github/business-operations/general-sops/BUSINESS-MEMORY-TREE-CURRENT-AND-TARGET-ARCHITECTURE.md` §1.2 and §8 (nested collections)
+
+Child-only rules stay in each child **code** repo under `.cursor/rules/` when that repo is the workspace root.
