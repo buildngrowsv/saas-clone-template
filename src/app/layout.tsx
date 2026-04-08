@@ -90,6 +90,29 @@ export const metadata: Metadata = {
  * has a different preference cached. suppressHydrationWarning prevents
  * React from throwing an error for this known, harmless mismatch.
  */
+/**
+ * JSON-LD structured data for search engine rich results.
+ *
+ * Provides schema.org SoftwareApplication markup so Google/Bing can display
+ * rich snippets (app name, category, pricing) in search results. This is
+ * derived from PRODUCT_CONFIG so each clone automatically gets correct
+ * structured data without manual edits.
+ */
+const jsonLdStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: PRODUCT_CONFIG.name,
+  description: PRODUCT_CONFIG.description,
+  applicationCategory: "MultimediaApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "Free tier available. Pro plans for unlimited use.",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -97,6 +120,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLdStructuredData),
+          }}
+        />
+      </head>
       <body className="min-h-screen antialiased">
         <GoogleAnalyticsLoader />
         <CookieConsent />
