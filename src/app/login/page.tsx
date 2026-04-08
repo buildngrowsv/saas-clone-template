@@ -41,7 +41,18 @@ import { siteConfig } from "@/config/site";
  */
 function LoginForm() {
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const rawRedirect = searchParams.get("redirect") || "/dashboard";
+
+  /**
+   * Sanitize the redirect URL to prevent open redirect attacks.
+   * Only allow relative paths that start with "/" (not "//").
+   * An attacker could craft /login?redirect=https://evil.com to hijack
+   * post-auth navigation. We reject anything that isn't a same-origin path.
+   */
+  const redirect =
+    rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/dashboard";
 
   /**
    * Initiate Google OAuth sign-in flow.
