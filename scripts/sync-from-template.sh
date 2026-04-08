@@ -32,13 +32,20 @@ TEMPLATE_ROOT="$(cd "$SCRIPT_DIRECTORY/.." && pwd)"
 # Files that flow downstream. Keep this list tight and reviewed.
 # Each entry is a path relative to the template root.
 ALLOW_LIST=(
-  "next.config.ts"
   "scripts/validate-env-configuration.mjs"
   "scripts/check-secrets.sh"
   "scripts/stamp-tests.sh"
   "scripts/install-secret-guard-hook.sh"
   "testing/templates/e2e/smoke.spec.ts"
 )
+
+# NOTE (Builder 1, iron-viper-6183, T19 pane1775, 2026-04-08):
+# next.config.ts was REMOVED from ALLOW_LIST. 38/41 fleet clones have
+# per-product customizations in next.config.ts (next-intl plugin, custom
+# headers, product-specific comments). Blindly overwriting it breaks i18n
+# routing. Security headers from the template should be added to clones
+# via a separate, additive script that merges headers into existing config
+# rather than replacing the entire file.
 
 # Files this script will NEVER overwrite even if listed above.
 # These hold per-clone branding, copy, env, and pricing — touching them
