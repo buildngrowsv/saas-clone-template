@@ -44,5 +44,6 @@ export const authClient = createAuthClient({
    * and in Vercel environment variables for production.
    * Falls back to localhost:4738 which matches our dev port.
    */
-  baseURL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:4738",
+  // .trim() guards against trailing newline from `echo "url" | vercel env add` pattern
+  baseURL: (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:4738").trim(),
 });

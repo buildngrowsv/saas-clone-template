@@ -121,7 +121,9 @@ export async function POST(request: NextRequest) {
    * The ?checkout=success/canceled query param lets the destination page
    * show a success or cancellation message.
    */
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:4738";
+  // .trim() prevents silent breakage from trailing whitespace injected by `echo` during `vercel env add`
+  // (verified bug: echo "url\n" | vercel env add → %0A suffix on all Stripe redirect URLs)
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:4738").trim();
 
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: stripeCustomerId,
