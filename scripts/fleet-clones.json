@@ -1,0 +1,45 @@
+{
+  "_comment": "Fleet manifest of live clones derived from saas-clone-template. Used by fleet-sync-all.sh to iterate sync-from-template.sh across every downstream repo. Extend this list as new clones ship. Authored T18 (pane1775, 2026-04-08) from the 5 T15-audited clones; remaining ~15 clones to be added by fleet sweep.",
+  "clones": [
+    {
+      "name": "ai-logo-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-logo-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-logo-generator.git",
+      "production_url": "https://generateailogo.com",
+      "owner": "buildngrowsv",
+      "audited_in": "T15 pane1775 2026-04-08"
+    },
+    {
+      "name": "ai-room-planner",
+      "local_path": "/Users/ak/UserRoot/Github/ai-room-planner",
+      "git_remote": "https://github.com/buildngrowsv/ai-room-planner.git",
+      "production_url": "https://airoomredesigner.com",
+      "owner": "buildngrowsv",
+      "audited_in": "T15 pane1775 2026-04-08"
+    },
+    {
+      "name": "ai-product-photo-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-product-photo-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-product-photo-generator.git",
+      "production_url": "https://aiproductphotomaker.com",
+      "owner": "buildngrowsv",
+      "audited_in": "T15 pane1775 2026-04-08"
+    },
+    {
+      "name": "ai-manga-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-manga-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-manga-generator.git",
+      "production_url": "https://mangaartai.com",
+      "owner": "buildngrowsv",
+      "audited_in": "T15 pane1775 2026-04-08"
+    },
+    {
+      "name": "ai-background-remover",
+      "local_path": "/Users/ak/UserRoot/Github/ai-background-remover",
+      "git_remote": "https://github.com/buildngrowsv/ai-background-remover.git",
+      "production_url": "https://removebgapp.com",
+      "owner": "buildngrowsv",
+      "audited_in": "T15 pane1775 2026-04-08"
+    }
+  ]
+}
