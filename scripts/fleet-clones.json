@@ -1,45 +1,251 @@
 {
-  "_comment": "Fleet manifest of live clones derived from saas-clone-template. Used by fleet-sync-all.sh to iterate sync-from-template.sh across every downstream repo. Extend this list as new clones ship. Authored T18 (pane1775, 2026-04-08) from the 5 T15-audited clones; remaining ~15 clones to be added by fleet sweep.",
+  "_comment": "Fleet manifest. Expanded T20 pane1775 2026-04-08 from 5\u219240 clones via fal.media next.config.ts heuristic. All buildngrowsv/ai-* repos with fal.media/fal.ai in next.config.ts are treated as saas-clone-template descendants. production_url unknown for expanded entries \u2014 fill in during fleet-sweep PR review.",
   "clones": [
     {
-      "name": "ai-logo-generator",
-      "local_path": "/Users/ak/UserRoot/Github/ai-logo-generator",
-      "git_remote": "https://github.com/buildngrowsv/ai-logo-generator.git",
-      "production_url": "https://generateailogo.com",
-      "owner": "buildngrowsv",
-      "audited_in": "T15 pane1775 2026-04-08"
+      "name": "ai-animated-photo-generator-web",
+      "local_path": "/Users/ak/UserRoot/Github/ai-animated-photo-generator-web",
+      "git_remote": "https://github.com/buildngrowsv/ai-animated-photo-generator-web.git",
+      "owner": "buildngrowsv"
     },
     {
-      "name": "ai-room-planner",
-      "local_path": "/Users/ak/UserRoot/Github/ai-room-planner",
-      "git_remote": "https://github.com/buildngrowsv/ai-room-planner.git",
-      "production_url": "https://airoomredesigner.com",
-      "owner": "buildngrowsv",
-      "audited_in": "T15 pane1775 2026-04-08"
+      "name": "ai-anime-portrait-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-anime-portrait-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-anime-portrait-generator.git",
+      "owner": "buildngrowsv"
     },
     {
-      "name": "ai-product-photo-generator",
-      "local_path": "/Users/ak/UserRoot/Github/ai-product-photo-generator",
-      "git_remote": "https://github.com/buildngrowsv/ai-product-photo-generator.git",
-      "production_url": "https://aiproductphotomaker.com",
-      "owner": "buildngrowsv",
-      "audited_in": "T15 pane1775 2026-04-08"
+      "name": "ai-avatar-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-avatar-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-avatar-generator.git",
+      "owner": "buildngrowsv"
     },
     {
-      "name": "ai-manga-generator",
-      "local_path": "/Users/ak/UserRoot/Github/ai-manga-generator",
-      "git_remote": "https://github.com/buildngrowsv/ai-manga-generator.git",
-      "production_url": "https://mangaartai.com",
-      "owner": "buildngrowsv",
-      "audited_in": "T15 pane1775 2026-04-08"
+      "name": "ai-baby-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-baby-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-baby-generator.git",
+      "owner": "buildngrowsv"
     },
     {
       "name": "ai-background-remover",
       "local_path": "/Users/ak/UserRoot/Github/ai-background-remover",
       "git_remote": "https://github.com/buildngrowsv/ai-background-remover.git",
-      "production_url": "https://removebgapp.com",
-      "owner": "buildngrowsv",
-      "audited_in": "T15 pane1775 2026-04-08"
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-birthday-card-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-birthday-card-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-birthday-card-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-business-card-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-business-card-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-business-card-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-cartoon-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-cartoon-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-cartoon-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-chart-from-data",
+      "local_path": "/Users/ak/UserRoot/Github/ai-chart-from-data",
+      "git_remote": "https://github.com/buildngrowsv/ai-chart-from-data.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-chart-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-chart-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-chart-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-coloring-page-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-coloring-page-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-coloring-page-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-face-swap",
+      "local_path": "/Users/ak/UserRoot/Github/ai-face-swap",
+      "git_remote": "https://github.com/buildngrowsv/ai-face-swap.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-food-photography-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-food-photography-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-food-photography-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-hairstyle-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-hairstyle-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-hairstyle-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-icon-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-icon-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-icon-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-image-upscaler",
+      "local_path": "/Users/ak/UserRoot/Github/ai-image-upscaler",
+      "git_remote": "https://github.com/buildngrowsv/ai-image-upscaler.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-interior-design",
+      "local_path": "/Users/ak/UserRoot/Github/ai-interior-design",
+      "git_remote": "https://github.com/buildngrowsv/ai-interior-design.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-logo-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-logo-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-logo-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-manga-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-manga-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-manga-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-meme-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-meme-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-meme-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-mockup-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-mockup-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-mockup-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-music-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-music-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-music-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-outfit-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-outfit-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-outfit-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-pet-portrait",
+      "local_path": "/Users/ak/UserRoot/Github/ai-pet-portrait",
+      "git_remote": "https://github.com/buildngrowsv/ai-pet-portrait.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-photo-colorizer",
+      "local_path": "/Users/ak/UserRoot/Github/ai-photo-colorizer",
+      "git_remote": "https://github.com/buildngrowsv/ai-photo-colorizer.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-photo-restorer",
+      "local_path": "/Users/ak/UserRoot/Github/ai-photo-restorer",
+      "git_remote": "https://github.com/buildngrowsv/ai-photo-restorer.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-presentation-maker",
+      "local_path": "/Users/ak/UserRoot/Github/ai-presentation-maker",
+      "git_remote": "https://github.com/buildngrowsv/ai-presentation-maker.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-product-photo-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-product-photo-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-product-photo-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-professional-headshots",
+      "local_path": "/Users/ak/UserRoot/Github/ai-professional-headshots",
+      "git_remote": "https://github.com/buildngrowsv/ai-professional-headshots.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-qr-art-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-qr-art-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-qr-art-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-qr-code-art",
+      "local_path": "/Users/ak/UserRoot/Github/ai-qr-code-art",
+      "git_remote": "https://github.com/buildngrowsv/ai-qr-code-art.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-resume-photo-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-resume-photo-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-resume-photo-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-room-planner",
+      "local_path": "/Users/ak/UserRoot/Github/ai-room-planner",
+      "git_remote": "https://github.com/buildngrowsv/ai-room-planner.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-sketch-to-image",
+      "local_path": "/Users/ak/UserRoot/Github/ai-sketch-to-image",
+      "git_remote": "https://github.com/buildngrowsv/ai-sketch-to-image.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-storybook-illustrator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-storybook-illustrator",
+      "git_remote": "https://github.com/buildngrowsv/ai-storybook-illustrator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-tattoo-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-tattoo-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-tattoo-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-text-to-speech",
+      "local_path": "/Users/ak/UserRoot/Github/ai-text-to-speech",
+      "git_remote": "https://github.com/buildngrowsv/ai-text-to-speech.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-vector-illustration",
+      "local_path": "/Users/ak/UserRoot/Github/ai-vector-illustration",
+      "git_remote": "https://github.com/buildngrowsv/ai-vector-illustration.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-wallpaper-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-wallpaper-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-wallpaper-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-watercolor-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-watercolor-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-watercolor-generator.git",
+      "owner": "buildngrowsv"
+    },
+    {
+      "name": "ai-yearbook-photo-generator",
+      "local_path": "/Users/ak/UserRoot/Github/ai-yearbook-photo-generator",
+      "git_remote": "https://github.com/buildngrowsv/ai-yearbook-photo-generator.git",
+      "owner": "buildngrowsv"
     }
   ]
 }
