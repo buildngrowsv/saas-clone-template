@@ -13,7 +13,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "verify": "npm run build && echo '✅ Build passes — safe to push'",
-    "check:secrets": "bash scripts/check-secrets.sh --all"
+    "check:secrets": "bash scripts/check-secrets.sh --all",
+    "env:validate": "node scripts/validate-env-configuration.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1015.0",
