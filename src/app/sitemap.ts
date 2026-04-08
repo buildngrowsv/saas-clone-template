@@ -49,7 +49,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "",           // homepage — highest priority
     "/pricing",   // conversion-critical
     "/login",     // user acquisition
-    "/privacy-policy",
+    "/privacy",
     "/terms-of-service",
     "/refund-policy",
     // TODO: add product-specific paths here, e.g.:

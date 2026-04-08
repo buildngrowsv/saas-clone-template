@@ -111,7 +111,7 @@ export function CookieConsentBanner() {
         <p className="text-sm text-gray-300">
           We use analytics cookies (Google Analytics) to understand traffic and improve the product.
           You can accept or reject non-essential analytics. See our{" "}
-          <Link href="/privacy-policy" className="text-blue-400 underline underline-offset-2 hover:text-blue-300">
+          <Link href="/privacy" className="text-blue-400 underline underline-offset-2 hover:text-blue-300">
             Privacy Policy
           </Link>{" "}
           for details.
