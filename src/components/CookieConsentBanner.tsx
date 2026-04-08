@@ -36,15 +36,26 @@ import {
 import { isPublicGaMeasurementConfigured } from "@/lib/ga4-public-env";
 
 /**
- * Applies Consent Mode update for analytics_storage only (GA4). Ad surfaces stay denied
- * in `GoogleAnalytics` defaults unless we add Google Ads later.
+ * Applies Consent Mode v2 update for all four Google consent surfaces.
+ *
+ * Google Consent Mode v2 (required since March 2024 for EEA measurement)
+ * needs ad_storage, ad_user_data, and ad_personalization alongside
+ * analytics_storage. Even without Google Ads today, setting these correctly
+ * prevents measurement gaps if ads are added later and satisfies Google's
+ * Consent Mode v2 diagnostic checks.
+ *
+ * FIX: argon-scout-6381, 2026-04-08 — was only updating analytics_storage.
  */
 function applyAnalyticsConsentToGtag(choice: CookieConsentChoice): void {
   if (typeof window === "undefined" || typeof window.gtag !== "function") {
     return;
   }
+  const value = choice === "accepted" ? "granted" : "denied";
   window.gtag("consent", "update", {
-    analytics_storage: choice === "accepted" ? "granted" : "denied",
+    analytics_storage: value,
+    ad_storage: value,
+    ad_user_data: value,
+    ad_personalization: value,
   });
 }
 
