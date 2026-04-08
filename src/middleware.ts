@@ -34,6 +34,87 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+/* ─── In-Memory Auth Rate Limiter ──────────────────────────────────────
+ * Protects auth endpoints from credential stuffing and brute force.
+ *
+ * Sensitive auth paths (signin, callback, signup, password reset) are
+ * limited to 10 requests per minute per IP. This is generous for
+ * legitimate use (a user retrying "Sign in") but blocks automated
+ * attacks that hammer auth endpoints with stolen credential lists.
+ *
+ * Read-only auth paths (get-session, csrf) are NOT rate-limited because
+ * useSession() fires on every page navigation and those endpoints have
+ * near-zero backend cost. The existing Vercel/edge limits handle those.
+ *
+ * Not durable across cold starts — fine for auth abuse prevention
+ * where the attack pattern is sustained requests over minutes.
+ *
+ * Added 2026-04-08 (argon-scout-6381). Same pattern as GenFlix 961a741
+ * and banananano2pro 77c6943. Future clones from this template inherit
+ * this protection automatically.
+ * ──────────────────────────────────────────────────────────────────── */
+
+interface AuthRateLimitEntry {
+  count: number;
+  windowStart: number;
+}
+
+const AUTH_RATE_LIMIT_MAP = new Map<string, AuthRateLimitEntry>();
+const AUTH_RATE_LIMIT_MAX = 10;
+const AUTH_RATE_LIMIT_WINDOW_MS = 60_000;
+
+/**
+ * Sensitive auth sub-paths that need tight rate limiting.
+ * These are the endpoints involved in the login/signup flow.
+ */
+const SENSITIVE_AUTH_PATHS = [
+  "/api/auth/signin",
+  "/api/auth/sign-in",
+  "/api/auth/signup",
+  "/api/auth/sign-up",
+  "/api/auth/callback",
+  "/api/auth/forget-password",
+  "/api/auth/reset-password",
+];
+
+function extractClientIpFromMiddleware(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return request.headers.get("x-real-ip") ?? "unknown";
+}
+
+/**
+ * Check if a sensitive auth endpoint is being hit too frequently by one IP.
+ * Returns a 429 response if rate limited, null if allowed.
+ */
+function checkAuthRateLimit(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  const isSensitive = SENSITIVE_AUTH_PATHS.some((p) => pathname.startsWith(p));
+  if (!isSensitive) return null;
+
+  const ip = extractClientIpFromMiddleware(request);
+  const now = Date.now();
+  const entry = AUTH_RATE_LIMIT_MAP.get(ip);
+
+  if (!entry || now - entry.windowStart > AUTH_RATE_LIMIT_WINDOW_MS) {
+    AUTH_RATE_LIMIT_MAP.set(ip, { count: 1, windowStart: now });
+    return null;
+  }
+
+  entry.count++;
+  if (entry.count > AUTH_RATE_LIMIT_MAX) {
+    const retryAfter = Math.ceil(
+      (entry.windowStart + AUTH_RATE_LIMIT_WINDOW_MS - now) / 1000
+    );
+    return NextResponse.json(
+      { error: "Too many authentication attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
+  }
+
+  return null;
+}
+
 /**
  * Routes that don't require authentication.
  * Includes the landing page, pricing, legal pages, and API endpoints
@@ -63,7 +144,18 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   /**
-   * Allow public paths and static assets through without auth check.
+   * STEP 1: Rate-limit sensitive auth endpoints BEFORE allowing them through.
+   * This runs even on public /api/auth paths because the rate limiter only
+   * targets the specific sensitive sub-paths (signin, signup, callback, etc.)
+   * while leaving get-session and csrf unthrottled.
+   */
+  if (pathname.startsWith("/api/auth")) {
+    const rateLimitResponse = checkAuthRateLimit(request);
+    if (rateLimitResponse) return rateLimitResponse;
+  }
+
+  /**
+   * STEP 2: Allow public paths and static assets through without auth check.
    * Static assets include: /_next (Next.js internals), /icons, and any
    * file with an extension (images, fonts, etc.).
    */
