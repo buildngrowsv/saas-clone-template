@@ -49,7 +49,12 @@ const PUBLIC_PATHS = [
   "/login",
   "/about",
   "/privacy-policy",
+  "/privacy",
   "/terms-of-service",
+  "/terms",
+  "/refund-policy",
+  "/refund",
+  "/vs",
   "/api/auth",
   "/api/stripe/webhook",
 ];
@@ -102,6 +107,18 @@ export const config = {
      * This ensures the middleware runs on page navigations and API calls.
      * The negative lookahead excludes Next.js internal routes and favicon.
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    /**
+     * UPDATED 2026-04-08 (steel-circuit-4738): Added privacy, terms, refund-policy,
+     * and vs to the negative lookahead. When clones adopt next-intl for i18n, the
+     * middleware matcher controls which paths get locale-rewritten. Legal pages
+     * at /privacy, /terms, /refund-policy exist OUTSIDE the [locale] directory
+     * structure and must be excluded, otherwise next-intl rewrites them to
+     * /en/privacy which doesn't exist → 404. The /vs comparison pages have the
+     * same pattern.
+     *
+     * Both path variants are included (/privacy + /privacy-policy, /terms +
+     * /terms-of-service) because the fleet uses both naming conventions.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|api|privacy-policy|privacy|terms-of-service|terms|refund-policy|refund|vs|.*\\..*).*)",
   ],
 };
