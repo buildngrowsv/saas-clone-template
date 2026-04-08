@@ -100,10 +100,24 @@ const OPTIONAL_VARS = [
  * Google OAuth client IDs with a trailing \n break the consent-screen redirect.
  */
 const WHITESPACE_SENSITIVE = [
+  // Anything that flows into an HTTP header, auth handshake, or API bearer
+  // token will silently 401/403 if a trailing \n is present — the classic
+  // `echo "$VAL" | vercel env add` footgun. Always use `printf '%s' "$VAL"`.
+  // Incident reference: REVIEWER-CANONICAL-FLEET-SWEEP-2026-04-08.md +
+  // continuous-improvement-master.md row "OAuth/Stripe/API auth fails after
+  // vercel env add".
   "NEXT_PUBLIC_APP_URL",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "BETTER_AUTH_SECRET",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_PUBLISHABLE_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "STRIPE_PRICE_BASIC",
+  "STRIPE_PRICE_PRO",
+  "FAL_KEY",
+  "RESEND_API_KEY",
+  "DATABASE_URL",
 ];
 
 const URL_KEYS = ["NEXT_PUBLIC_APP_URL"];
