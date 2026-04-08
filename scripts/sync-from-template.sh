@@ -37,6 +37,7 @@ ALLOW_LIST=(
   "scripts/stamp-tests.sh"
   "scripts/install-secret-guard-hook.sh"
   "testing/templates/e2e/smoke.spec.ts"
+  "src/app/api/health/route.ts"
 )
 
 # NOTE (Builder 1, iron-viper-6183, T19 pane1775, 2026-04-08):
