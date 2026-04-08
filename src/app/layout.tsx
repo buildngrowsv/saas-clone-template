@@ -21,26 +21,59 @@
 
 import type { Metadata } from "next";
 import { PRODUCT_CONFIG } from "@/lib/config";
+import { siteConfig } from "@/config/site";
 import { AuthSessionProvider } from "@/components/AuthSessionProvider";
 import { default as GoogleAnalyticsLoader } from "@/components/GoogleAnalytics";
 import { CookieConsent } from "@/components/CookieConsent";
 import "./globals.css";
 
 /**
- * Dynamic metadata generated from PRODUCT_CONFIG.
+ * Dynamic metadata generated from PRODUCT_CONFIG and siteConfig.
+ *
+ * WHY metadataBase:
+ * Next.js App Router uses `metadataBase` to resolve all relative URLs in metadata
+ * (e.g. og:image paths). Without it, OG images, canonical URLs, and Twitter card
+ * images all generate as relative paths, which break social sharing previews.
+ *
+ * The value comes from NEXT_PUBLIC_APP_URL (trimmed via siteConfig.siteUrl) —
+ * set this env var on Vercel to your production domain before launch.
+ *
+ * WHY alternates.canonical:
+ * Canonical URL prevents duplicate content penalties from search engines when
+ * the same page is accessible via multiple URLs (e.g. www vs non-www, preview URLs).
+ *
  * WHY: By deriving metadata from config, cloning a new product automatically
  * updates all SEO tags. No need to manually edit layout.tsx for each clone.
  */
 export const metadata: Metadata = {
+  /**
+   * metadataBase resolves relative paths in openGraph.images, twitter.images,
+   * and alternates.canonical. Must be an absolute URL.
+   * Reference: https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+   */
+  metadataBase: new URL(siteConfig.siteUrl),
   title: {
     default: `${PRODUCT_CONFIG.name} — ${PRODUCT_CONFIG.tagline}`,
     template: `%s | ${PRODUCT_CONFIG.name}`,
   },
   description: PRODUCT_CONFIG.description,
+  /**
+   * alternates.canonical: tells search engines the preferred URL for this page.
+   * Prevents duplicate content issues from Vercel preview URLs or www/non-www variants.
+   */
+  alternates: {
+    canonical: siteConfig.siteUrl,
+  },
   openGraph: {
     title: PRODUCT_CONFIG.name,
     description: PRODUCT_CONFIG.description,
     type: "website",
+    url: siteConfig.siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PRODUCT_CONFIG.name,
+    description: PRODUCT_CONFIG.description,
   },
 };
 
