@@ -76,7 +76,7 @@ const REQUIRED_VARS = [
   { name: "GOOGLE_CLIENT_ID", description: "Google OAuth Client ID" },
   { name: "GOOGLE_CLIENT_SECRET", description: "Google OAuth Client Secret" },
   { name: "STRIPE_SECRET_KEY", description: "Stripe secret API key (sk_live_* or sk_test_*)" },
-  { name: "STRIPE_PUBLISHABLE_KEY", description: "Stripe publishable key (pk_live_* or pk_test_*)" },
+  { name: "STRIPE_PUBLISHABLE_KEY", description: "Stripe publishable key (pk_live_* or pk_test_*) — also aliased as NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in stripe.ts" },
   { name: "STRIPE_WEBHOOK_SECRET", description: "Stripe webhook signing secret (whsec_*)" },
   { name: "STRIPE_PRICE_BASIC", description: "Stripe price ID for Basic tier" },
   { name: "STRIPE_PRICE_PRO", description: "Stripe price ID for Pro tier" },
@@ -93,6 +93,9 @@ const OPTIONAL_VARS = [
   { name: "R2_SECRET_ACCESS_KEY", description: "Cloudflare R2 secret key" },
   { name: "R2_BUCKET_NAME", description: "Cloudflare R2 bucket name" },
   { name: "R2_PUBLIC_URL", description: "Cloudflare R2 public URL" },
+  { name: "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", description: "Stripe publishable key (client-side alias used in stripe.ts)" },
+  { name: "NEXT_PUBLIC_SUPPORT_EMAIL", description: "Support email shown on legal pages (privacy, terms, refund)" },
+  { name: "NEXTAUTH_SECRET", description: "Legacy auth secret fallback (prefer BETTER_AUTH_SECRET)" },
 ];
 
 /**
@@ -118,9 +121,18 @@ const WHITESPACE_SENSITIVE = [
   "FAL_KEY",
   "RESEND_API_KEY",
   "DATABASE_URL",
+  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
 ];
 
 const URL_KEYS = ["NEXT_PUBLIC_APP_URL"];
+
+/* ─── ANSI colors for terminal output ──────────────────────────────── */
+
+const isTTY = process.stdout.isTTY;
+const green = (s) => (isTTY ? `\x1b[32m${s}\x1b[0m` : s);
+const red = (s) => (isTTY ? `\x1b[31m${s}\x1b[0m` : s);
+const yellow = (s) => (isTTY ? `\x1b[33m${s}\x1b[0m` : s);
+const bold = (s) => (isTTY ? `\x1b[1m${s}\x1b[0m` : s);
 
 /* ─── Checks ────────────────────────────────────────────────────────── */
 
@@ -131,25 +143,33 @@ if (loadedFiles.length) {
 }
 
 let exitCode = 0;
+let criticalSet = 0;
+let criticalMissing = 0;
+let warningSet = 0;
+let warningMissing = 0;
 
-console.log("\nREQUIRED:");
+console.log(bold("\nCRITICAL (app will not work without these):"));
 for (const v of REQUIRED_VARS) {
   const val = process.env[v.name];
   if (val && val.trim()) {
-    console.log(`  SET: ${v.name}`);
+    console.log(green(`  PASS  ${v.name}`));
+    criticalSet++;
   } else {
-    console.error(`  MISSING: ${v.name} -- ${v.description}`);
+    console.error(red(`  FAIL  ${v.name} -- ${v.description}`));
+    criticalMissing++;
     exitCode = 1;
   }
 }
 
-console.log("\nOPTIONAL:");
+console.log(bold("\nWARNING (degraded features without these):"));
 for (const v of OPTIONAL_VARS) {
   const val = process.env[v.name];
   if (val && val.trim()) {
-    console.log(`  SET: ${v.name}`);
+    console.log(green(`  PASS  ${v.name}`));
+    warningSet++;
   } else {
-    console.log(`  UNSET: ${v.name} -- ${v.description}`);
+    console.log(yellow(`  WARN  ${v.name} -- ${v.description}`));
+    warningMissing++;
   }
 }
 
@@ -181,10 +201,16 @@ if (gaId && !/^G-[A-Z0-9]+$/i.test(gaId)) {
   console.warn("\nWARNING: GA4 Measurement ID should look like G-XXXXXXXXXX.");
 }
 
+/* ─── Summary ──────────────────────────────────────────────────────── */
+
+console.log(bold("\n─── SUMMARY ───"));
+console.log(`  Critical: ${green(`${criticalSet} passed`)}  ${criticalMissing ? red(`${criticalMissing} failed`) : "0 failed"}`);
+console.log(`  Warning:  ${green(`${warningSet} passed`)}  ${warningMissing ? yellow(`${warningMissing} missing`) : "0 missing"}`);
+
 if (exitCode > 0) {
-  console.error("\nFix: copy names from .env.example, set them on your hosting platform, then re-run.");
+  console.error(red("\nFAILED: Fix missing CRITICAL vars. Copy names from .env.example, set on hosting platform, re-run."));
   process.exit(1);
 }
 
-console.log("\nAll required variables are set.");
+console.log(green("\nPASSED: All critical variables are set."));
 process.exit(0);
