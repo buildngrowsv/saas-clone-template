@@ -129,6 +129,7 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/login",
   "/about",
+  "/get-started",
   "/privacy-policy",
   "/privacy",
   "/terms-of-service",
@@ -211,6 +212,6 @@ export const config = {
      * Both path variants are included (/privacy + /privacy-policy, /terms +
      * /terms-of-service) because the fleet uses both naming conventions.
      */
-    "/((?!_next/static|_next/image|favicon.ico|api|privacy-policy|privacy|terms-of-service|terms|refund-policy|refund|vs|.*\\..*).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api|privacy-policy|privacy|terms-of-service|terms|refund-policy|refund|get-started|vs|.*\\..*).*)",
   ],
 };

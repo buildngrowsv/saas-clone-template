@@ -26,9 +26,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { stripeServerClient } from "@/lib/stripe";
+import {
+  readUtmParametersFromCookie,
+  formatUtmParametersForStripeMetadata,
+} from "@/lib/utm-capture";
 
 /**
  * Maps tier names to Stripe Price IDs from environment variables.
@@ -49,14 +53,25 @@ function getStripePriceIdForTier(
   return tierToPriceIdMapping[subscriptionTier];
 }
 
+function getAppUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:4837";
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const appUrl = getAppUrl();
+
     /**
      * Step 1: Verify authentication.
      * We MUST know who the user is before creating a checkout session,
      * because we need to associate the Stripe subscription with their account.
      */
-    const session = await getServerSession(authOptions);
+    /**
+     * MIGRATION NOTE: Changed from NextAuth's getServerSession(authOptions)
+     * to Better Auth's auth.api.getSession({ headers }). This gives us the
+     * authenticated user's email and ID for associating with the Stripe checkout.
+     */
+    const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -95,16 +110,33 @@ export async function POST(request: NextRequest) {
     }
 
     /**
+     * Step 3.5: Read UTM attribution from the cookie for Stripe metadata.
+     *
+     * WHY: Attaching acquisition source to every Stripe checkout lets us
+     * compute per-channel ROAS and LTV directly in Stripe Dashboard or via
+     * the Stripe API, without needing GA4 BigQuery exports.
+     *
+     * The UTM cookie was set by the useUtmCapture hook on first page load.
+     * We read it server-side here because this is an API route, not a
+     * client component — localStorage is not available.
+     */
+    const requestHeaders = await headers();
+    const rawCookieHeader = requestHeaders.get("cookie") || "";
+    const utmParams = readUtmParametersFromCookie(rawCookieHeader);
+    const utmStripeMetadata = formatUtmParametersForStripeMetadata(utmParams);
+
+    /**
      * Step 4: Create the Stripe Checkout Session.
-     * 
+     *
      * WHY these specific options:
      * - mode: "subscription" — we want recurring monthly billing, not one-time
      * - customer_email: pre-fills the email field so users don't have to type it
      * - allow_promotion_codes: lets us create coupon codes for marketing campaigns
      * - success_url: where Stripe redirects after successful payment
      * - cancel_url: where Stripe redirects if the user cancels checkout
-     * - metadata: stores the tier and user email so our webhook can read them
-     *   when processing the checkout.session.completed event
+     * - metadata: stores the tier, user email, AND acquisition source so our
+     *   webhook can read them when processing checkout.session.completed.
+     *   UTM metadata enables per-channel LTV analysis in Stripe Dashboard.
      */
     const stripeCheckoutSession =
       await stripeServerClient.checkout.sessions.create({
@@ -117,11 +149,12 @@ export async function POST(request: NextRequest) {
             quantity: 1,
           },
         ],
-        success_url: `${process.env.NEXTAUTH_URL}/dashboard?checkout=success`,
-        cancel_url: `${process.env.NEXTAUTH_URL}/#pricing`,
+        success_url: `${appUrl}/dashboard?checkout=success`,
+        cancel_url: `${appUrl}/#pricing`,
         metadata: {
           userEmail: session.user.email,
           subscriptionTier: requestedTier,
+          ...utmStripeMetadata,
         },
       });
 
