@@ -1,0 +1,81 @@
+{
+  "bestForPages": [
+    {
+      "slug": "startup-founders",
+      "audience": "Startup Founders",
+      "whyFit": "As a startup founder, you need a professional brand identity fast and on a budget. Our AI generates production-ready logos in seconds, saving you thousands on designer fees and weeks of back-and-forth.",
+      "topFeatures": [
+        "AI-generated logo designs",
+        "Multiple style variations",
+        "Vector SVG export",
+        "Commercial usage license",
+        "Brand color customization"
+      ],
+      "faq": [
+        {
+          "question": "Is this suitable for a real startup brand?",
+          "answer": "Absolutely. Our AI generates professional-quality logos used by thousands of startups. You get full commercial usage rights and vector SVG files ready for print, web, and app icons."
+        },
+        {
+          "question": "How much does it cost for a startup?",
+          "answer": "You can try for free (3 designs/day). Paid plans start at $4.99/mo for 50 designs — far less than hiring a designer ($500-5000+ per logo)."
+        },
+        {
+          "question": "Can I get multiple logo options to test?",
+          "answer": "Yes! Generate as many variations as you want. Each generation creates multiple style options you can compare, iterate on, and download."
+        }
+      ]
+    },
+    {
+      "slug": "freelancers",
+      "audience": "Freelancers",
+      "whyFit": "Freelancers need a polished personal brand without a design team. Our AI helps you create professional logos for your portfolio, invoices, and social profiles in minutes.",
+      "topFeatures": [
+        "AI-generated logo designs",
+        "Transparent background",
+        "Multiple style variations",
+        "Commercial usage license"
+      ],
+      "faq": [
+        {
+          "question": "Can I use the logos for my freelance business?",
+          "answer": "Yes! All generated logos come with full commercial usage rights. Use them on your website, business cards, invoices, and social media."
+        },
+        {
+          "question": "Is the free tier enough for a freelancer?",
+          "answer": "The free tier (3 logos/day) is great for trying out ideas. Most freelancers find the Basic plan ($4.99/mo) gives them plenty of room to experiment and create the perfect brand."
+        }
+      ]
+    }
+  ],
+  "vsPages": [
+    {
+      "slug": "looka",
+      "competitorName": "Looka",
+      "competitorPrice": "$20/mo for basic, up to $129 for brand kit",
+      "competitorWeaknesses": [
+        "Looka charges $20+ just to download a logo — our free tier lets you try first",
+        "Looka's brand kit costs $129 — we include commercial rights in all plans",
+        "Looka requires full signup before showing any results"
+      ],
+      "comparisonTable": [
+        { "feature": "Free downloads", "us": "3/day free", "them": "Pay to download" },
+        { "feature": "Starting price", "us": "$4.99/mo", "them": "$20 one-time" },
+        { "feature": "Brand kit", "us": "Included in Pro", "them": "$129 add-on" },
+        { "feature": "AI-powered", "us": "Yes", "them": "Yes" },
+        { "feature": "Vector SVG export", "us": "Yes", "them": "Premium only" },
+        { "feature": "No signup to try", "us": "Yes", "them": "No" }
+      ],
+      "faq": [
+        {
+          "question": "Is this a good alternative to Looka?",
+          "answer": "Yes! We offer comparable AI-generated logo quality at a fraction of the price. Our free tier lets you see results before paying, unlike Looka which requires payment to download."
+        },
+        {
+          "question": "Can I switch from Looka?",
+          "answer": "Absolutely. Sign up, generate logos for free, and see how they compare. Many users switch for the lower pricing and included commercial rights."
+        }
+      ]
+    }
+  ]
+}
