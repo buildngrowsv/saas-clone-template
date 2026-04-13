@@ -1,0 +1,25 @@
+{
+  "productName": "AI Room Redesigner",
+  "productSlug": "ai-room-redesigner",
+  "domain": "airoomredesigner.com",
+  "tagline": "Redesign any room in seconds with AI interior design",
+  "category": "Interior Design",
+  "competitors": ["RoomGPT", "Interior AI", "Collov AI", "Planner 5D", "HomeByMe"],
+  "useCases": ["living room redesign", "bedroom makeover", "kitchen renovation", "office space planning", "bathroom remodel", "real estate staging", "rental property styling", "commercial space design"],
+  "industries": ["homeowners", "interior designers", "real estate agents", "property managers", "architects", "home stagers", "renovation contractors", "airbnb hosts"],
+  "pricing": {
+    "free": "3 designs/day",
+    "basic": "$4.99/mo — 50 designs/mo",
+    "pro": "$9.99/mo — Unlimited"
+  },
+  "coreFeatures": [
+    "AI-powered room transformation",
+    "25+ interior design styles",
+    "Furniture recognition and replacement",
+    "Color palette suggestions",
+    "Before/after comparison view",
+    "High-resolution renders"
+  ],
+  "ctaPath": "/login",
+  "ctaText": "Redesign Room Free"
+}

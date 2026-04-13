@@ -1,0 +1,25 @@
+{
+  "productName": "Manga Art AI",
+  "productSlug": "manga-art-ai",
+  "domain": "mangaartai.com",
+  "tagline": "Transform photos into manga and anime art with AI",
+  "category": "AI Art Generation",
+  "competitors": ["Meitu", "ToonMe", "Prisma", "Waifu Labs", "Crypko"],
+  "useCases": ["anime portraits", "manga character creation", "social media avatars", "fan art", "webtoon illustrations", "profile pictures", "sticker design", "cosplay reference art"],
+  "industries": ["anime fans", "manga artists", "content creators", "social media influencers", "game designers", "webtoon creators", "cosplayers", "digital artists"],
+  "pricing": {
+    "free": "3 images/day",
+    "basic": "$4.99/mo — 50 images/mo",
+    "pro": "$9.99/mo — Unlimited"
+  },
+  "coreFeatures": [
+    "Photo to manga conversion",
+    "Multiple anime art styles",
+    "Character customization",
+    "High-resolution output",
+    "Batch generation",
+    "Style mixing and blending"
+  ],
+  "ctaPath": "/login",
+  "ctaText": "Create Manga Art Free"
+}

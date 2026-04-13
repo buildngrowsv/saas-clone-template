@@ -1,0 +1,25 @@
+{
+  "productName": "AI Logo Generator",
+  "productSlug": "ai-logo-generator",
+  "domain": "generateailogo.com",
+  "tagline": "Create professional logos in seconds with AI",
+  "category": "Design Tools",
+  "competitors": ["Looka", "Brandmark", "Hatchful by Shopify", "LogoMaker", "Canva Logo Maker"],
+  "useCases": ["startup branding", "social media profiles", "business cards", "website headers", "app icons", "merchandise design", "youtube channel art", "podcast cover art"],
+  "industries": ["startup founders", "freelancers", "small business owners", "content creators", "agencies", "ecommerce sellers", "podcasters", "youtubers"],
+  "pricing": {
+    "free": "3 logos/day",
+    "basic": "$4.99/mo — 50 logos/mo",
+    "pro": "$9.99/mo — Unlimited"
+  },
+  "coreFeatures": [
+    "AI-generated logo designs",
+    "Multiple style variations",
+    "Vector SVG export",
+    "Transparent background",
+    "Brand color customization",
+    "Commercial usage license"
+  ],
+  "ctaPath": "/login",
+  "ctaText": "Generate Logo Free"
+}

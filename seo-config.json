@@ -1,0 +1,25 @@
+{
+  "productName": "AI Tool Name",
+  "productSlug": "ai-tool-name",
+  "domain": "example.com",
+  "tagline": "Transform your images with one click",
+  "category": "AI Tools",
+  "competitors": ["Competitor1", "Competitor2", "Competitor3"],
+  "useCases": ["use case 1", "use case 2", "use case 3"],
+  "industries": ["photographers", "designers", "marketers"],
+  "pricing": {
+    "free": "3 images/day",
+    "basic": "$4.99/mo — 50 images/mo",
+    "pro": "$9.99/mo — Unlimited"
+  },
+  "coreFeatures": [
+    "AI-powered processing",
+    "Instant results",
+    "High resolution output",
+    "Batch processing",
+    "Cloud storage",
+    "API access"
+  ],
+  "ctaPath": "/login",
+  "ctaText": "Try Free Now"
+}

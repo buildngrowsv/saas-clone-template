@@ -1,0 +1,25 @@
+{
+  "productName": "Smart AI Upscaler",
+  "productSlug": "ai-image-upscaler",
+  "domain": "smartaiupscaler.com",
+  "tagline": "Upscale and enhance images with AI — up to 4x resolution",
+  "category": "Image Enhancement",
+  "competitors": ["Topaz Gigapixel", "Let's Enhance", "Upscale.media", "BigJPG", "Waifu2x"],
+  "useCases": ["photo enlargement", "print preparation", "social media images", "ecommerce product shots", "old photo restoration", "wallpaper creation", "thumbnail enhancement", "digital art upscaling"],
+  "industries": ["photographers", "ecommerce sellers", "print shops", "digital artists", "real estate agents", "marketing agencies", "game developers", "archivists"],
+  "pricing": {
+    "free": "3 images/day",
+    "basic": "$4.99/mo — 50 images/mo",
+    "pro": "$9.99/mo — Unlimited"
+  },
+  "coreFeatures": [
+    "AI-powered 2x/4x upscaling",
+    "Noise reduction and deblurring",
+    "Face enhancement technology",
+    "Batch upscaling support",
+    "Lossless quality output",
+    "Multiple format support (JPG, PNG, WebP)"
+  ],
+  "ctaPath": "/login",
+  "ctaText": "Upscale Image Free"
+}

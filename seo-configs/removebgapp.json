@@ -1,0 +1,25 @@
+{
+  "productName": "AI Background Remover",
+  "productSlug": "ai-background-remover",
+  "domain": "removebgapp.com",
+  "tagline": "Remove image backgrounds instantly with AI",
+  "category": "Image Editing",
+  "competitors": ["Remove.bg", "Canva Background Remover", "Photoroom", "Pixlr", "Fotor"],
+  "useCases": ["product photos", "profile pictures", "social media posts", "ecommerce listings", "real estate photos", "passport photos", "marketing materials", "presentation slides"],
+  "industries": ["photographers", "ecommerce sellers", "real estate agents", "content creators", "graphic designers", "marketing teams", "small business owners", "social media managers"],
+  "pricing": {
+    "free": "3 images/day",
+    "basic": "$4.99/mo — 50 images/mo",
+    "pro": "$9.99/mo — Unlimited"
+  },
+  "coreFeatures": [
+    "One-click background removal",
+    "AI-powered edge detection",
+    "Transparent PNG output",
+    "Batch processing support",
+    "High resolution up to 4K",
+    "Custom background replacement"
+  ],
+  "ctaPath": "/login",
+  "ctaText": "Remove Background Free"
+}
