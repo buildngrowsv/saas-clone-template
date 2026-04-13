@@ -30,7 +30,7 @@ import { siteConfig } from "@/config/site";
 let seoConfig: any = {};
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  seoConfig = require("../../../../seo-config.json");
+  seoConfig = require("../../../seo-config.json");
 } catch {
   // Fallback to PRODUCT_CONFIG defaults
 }

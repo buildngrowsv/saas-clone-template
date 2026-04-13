@@ -36,7 +36,7 @@ import { PRODUCT_CONFIG } from "@/lib/config";
 let seoConfig: any = {};
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  seoConfig = require("../../../seo-config.json");
+  seoConfig = require("../../seo-config.json");
 } catch {
   // No seo-config.json — use defaults from PRODUCT_CONFIG
 }
@@ -95,7 +95,7 @@ export function getSeoPageConfig(): SeoPagesSiteConfig {
   try {
     // Try loading custom seo-pages.json from project root
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const customConfig = require("../../../seo-pages.json") as SeoPagesSiteConfig;
+    const customConfig = require("../../seo-pages.json") as SeoPagesSiteConfig;
     if (customConfig.bestForPages && customConfig.vsPages) {
       cachedConfig = customConfig;
       return cachedConfig;
