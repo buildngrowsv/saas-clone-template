@@ -44,6 +44,7 @@ import { PRODUCT_CONFIG } from "@/lib/config";
 import {
   checkUserCreditAvailability,
   deductOneCreditForUser,
+  getUserSubscriptionTierFromDb,
   type SubscriptionTier,
 } from "@/lib/credits";
 import { createFalClient } from "@fal-ai/client";
@@ -181,26 +182,13 @@ const fal = createFalClient({
 });
 
 /**
- * Helper to get the user's subscription tier.
- * 
- * TODO (PRODUCTION): Look up the user's active subscription in the database:
- *   const subscription = await db.query.subscriptions.findFirst({
- *     where: and(
- *       eq(subscriptions.userEmail, userEmail),
- *       eq(subscriptions.status, 'active')
- *     )
- *   });
- *   return subscription?.tier ?? 'free';
- * 
- * For the template, we default to "free" since there's no database.
- * The Stripe webhook handler would normally set this in the DB.
+ * Helper to get the user's subscription tier from the database.
+ *
+ * Queries user_profiles.plan which is kept in sync by the Stripe webhook
+ * handler. Falls back to "free" if no profile exists yet.
  */
-function getUserSubscriptionTier(_userEmail: string): SubscriptionTier {
-  /**
-   * TEMPLATE PLACEHOLDER: Always returns "free".
-   * In production, query the database for the user's active subscription tier.
-   */
-  return "free";
+async function getUserSubscriptionTier(userId: string): Promise<SubscriptionTier> {
+  return getUserSubscriptionTierFromDb(userId);
 }
 
 export async function POST(request: NextRequest) {
@@ -277,8 +265,8 @@ export async function POST(request: NextRequest) {
      * that the user hasn't paid for.
      */
     const userSubscriptionTier =
-      getUserSubscriptionTier(authenticatedUserEmail);
-    const creditCheckResult = checkUserCreditAvailability(
+      await getUserSubscriptionTier(authenticatedUserId);
+    const creditCheckResult = await checkUserCreditAvailability(
       authenticatedUserId,
       userSubscriptionTier
     );
@@ -401,13 +389,13 @@ export async function POST(request: NextRequest) {
      * lose a credit for a failed generation. This is a UX decision that
      * prevents angry support tickets.
      */
-    deductOneCreditForUser(authenticatedUserId, userSubscriptionTier);
+    await deductOneCreditForUser(authenticatedUserId, userSubscriptionTier);
 
     /**
      * Re-check credits after deduction to include the updated count
      * in the response. The frontend uses this to show "X credits remaining".
      */
-    const updatedCreditCheck = checkUserCreditAvailability(
+    const updatedCreditCheck = await checkUserCreditAvailability(
       authenticatedUserId,
       userSubscriptionTier
     );
