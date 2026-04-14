@@ -30,7 +30,11 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDir, "..");
-const middlewarePath = path.join(projectRoot, "src", "middleware.ts");
+
+// Support both src/middleware.ts and root middleware.ts (fleet uses both)
+const srcMiddleware = path.join(projectRoot, "src", "middleware.ts");
+const rootMiddleware = path.join(projectRoot, "middleware.ts");
+const middlewarePath = fs.existsSync(srcMiddleware) ? srcMiddleware : rootMiddleware;
 
 const dryRun = !process.argv.includes("--apply");
 

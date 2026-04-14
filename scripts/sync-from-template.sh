@@ -39,6 +39,7 @@ ALLOW_LIST=(
   "scripts/merge-pseo-middleware-paths.mjs"
   "scripts/merge-security-headers.mjs"
   "testing/templates/e2e/smoke.spec.ts"
+  "vitest.config.ts"
   "src/app/api/health/route.ts"
   "src/app/not-found.tsx"
   "src/app/error.tsx"
