@@ -39,6 +39,7 @@ ROUTE_FILES=(
   "src/app/for/[audience]/page.tsx"
   "src/app/best/[slug]/page.tsx"
   "src/app/use-cases/[use-case]/page.tsx"
+  "src/app/vs/[competitor]/page.tsx"
 )
 
 # Clones with non-standard @/* -> ./* tsconfig (need manual handling)
