@@ -244,6 +244,59 @@ check_credits() {
   fi
 }
 
+# Check for OG image (social sharing preview)
+# Without an OG image, every social share (Twitter, LinkedIn, Slack) is text-only
+# and gets far fewer clicks. This is a high-impact SEO/marketing gap.
+check_og_image() {
+  local name="$1" repo="$2"
+  local og
+  og=$(find "$repo/src/app" "$repo/app" -maxdepth 1 \( -name "opengraph-image.*" -o -name "og-image.*" \) ! -path "*/.next/*" 2>/dev/null | head -1)
+  if [ -n "$og" ]; then
+    echo "$name|og-image|OK|$og"
+  else
+    # Check if OG images are defined in metadata
+    local layout_og
+    layout_og=$(grep -r "openGraph.*images\|og:image\|opengraph" "$repo/src/app/layout.tsx" "$repo/app/layout.tsx" 2>/dev/null | head -1)
+    if [ -n "$layout_og" ]; then
+      echo "$name|og-image|OK|OG image defined in layout metadata"
+    else
+      echo "$name|og-image|MISSING|no opengraph-image file or OG image metadata"
+    fi
+  fi
+}
+
+# Check for SeoInternalLinks on homepage
+# Without this, homepage PageRank never flows to pSEO pages.
+check_seo_links() {
+  local name="$1" repo="$2"
+  # Find the actual landing page (not a redirect)
+  local page=""
+  for candidate in "$repo/src/app/page.tsx" "$repo/app/page.tsx"; do
+    if [ -f "$candidate" ]; then
+      if grep -q "redirect(" "$candidate" 2>/dev/null; then
+        continue  # Skip redirect pages
+      fi
+      page="$candidate"
+      break
+    fi
+  done
+  # Check locale pages if root was a redirect
+  if [ -z "$page" ]; then
+    for candidate in "$repo/src/app/[locale]/page.tsx" "$repo/app/[locale]/page.tsx"; do
+      [ -f "$candidate" ] && page="$candidate" && break
+    done
+  fi
+  if [ -z "$page" ]; then
+    echo "$name|seo-links|WARN|no landing page found"
+    return
+  fi
+  if grep -q "SeoInternalLinks" "$page" 2>/dev/null; then
+    echo "$name|seo-links|OK|SeoInternalLinks on homepage"
+  else
+    echo "$name|seo-links|GAP|SeoInternalLinks missing from homepage"
+  fi
+}
+
 # Check for validate-env script
 check_validate_env() {
   local name="$1" repo="$2"
@@ -289,6 +342,8 @@ for clone in $CLONES; do
     error-pages)  result=$(check_error_pages "$clone" "$repo") ;;
     validate-env) result=$(check_validate_env "$clone" "$repo") ;;
     credits)      result=$(check_credits "$clone" "$repo") ;;
+    og-image)     result=$(check_og_image "$clone" "$repo") ;;
+    seo-links)    result=$(check_seo_links "$clone" "$repo") ;;
     all)
       result=""
       result+="$(check_pricing "$clone" "$repo")\n"
@@ -298,7 +353,9 @@ for clone in $CLONES; do
       result+="$(check_middleware "$clone" "$repo")\n"
       result+="$(check_error_pages "$clone" "$repo")\n"
       result+="$(check_validate_env "$clone" "$repo")\n"
-      result+="$(check_credits "$clone" "$repo")"
+      result+="$(check_credits "$clone" "$repo")\n"
+      result+="$(check_og_image "$clone" "$repo")\n"
+      result+="$(check_seo_links "$clone" "$repo")"
       ;;
   esac
 
