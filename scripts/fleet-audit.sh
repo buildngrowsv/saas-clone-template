@@ -18,11 +18,14 @@
 #   ./fleet-audit.sh                    # Full audit, output to stdout
 #   ./fleet-audit.sh --json             # JSON output
 #   ./fleet-audit.sh --report FILE      # Write report to file
-#   ./fleet-audit.sh --check pricing    # Only check pricing pages
-#   ./fleet-audit.sh --check checkout   # Only check checkout routes
-#   ./fleet-audit.sh --check sitemap    # Only check sitemaps
-#   ./fleet-audit.sh --check env        # Only check .env.example
-#   ./fleet-audit.sh --check all        # All checks (default)
+#   ./fleet-audit.sh --check pricing      # Only check pricing pages
+#   ./fleet-audit.sh --check checkout     # Only check checkout routes
+#   ./fleet-audit.sh --check sitemap      # Only check sitemaps
+#   ./fleet-audit.sh --check env          # Only check .env.example
+#   ./fleet-audit.sh --check middleware   # Only check pSEO middleware paths
+#   ./fleet-audit.sh --check error-pages  # Only check 404/error pages
+#   ./fleet-audit.sh --check validate-env # Only check validate-env script
+#   ./fleet-audit.sh --check all          # All checks (default)
 #
 # DEPENDS ON:
 # - fleet-clones.json in the same directory (list of clone repos)
@@ -73,12 +76,10 @@ find_app_dir() {
 
 check_pricing() {
   local name="$1" repo="$2"
-  local app_dir
-  app_dir="$(find_app_dir "$repo")"
-  [ -z "$app_dir" ] && echo "$name|pricing|MISSING|no app dir" && return
 
+  # Search BOTH src/app/ and app/ — some repos have content split across both
   local pricing
-  pricing=$(find "$app_dir" -path "*/pricing/page.tsx" ! -path "*/.next/*" 2>/dev/null | head -1)
+  pricing=$(find "$repo/src/app" "$repo/app" -path "*/pricing/page.tsx" ! -path "*/.next/*" 2>/dev/null | head -1)
   if [ -n "$pricing" ]; then
     # Check if it has metadata export — either in page.tsx or in layout.tsx (same dir)
     local pricing_dir has_meta
@@ -154,6 +155,65 @@ check_env() {
   fi
 }
 
+# Gate 9 compliance: do pSEO paths appear in middleware PUBLIC_PATHS?
+# Without these, Googlebot hits auth redirects and pages never get indexed.
+check_middleware() {
+  local name="$1" repo="$2"
+  local mw
+  mw=$(find "$repo" -name "middleware.ts" -not -path "*/node_modules/*" -not -path "*/.next/*" 2>/dev/null | head -1)
+  if [ -z "$mw" ]; then
+    echo "$name|middleware|WARN|no middleware.ts (no auth gating)"
+    return
+  fi
+
+  local missing=""
+  for path_seg in "/vs" "/for" "/use-cases" "/best" "/blog" "/lp" "/testimonials"; do
+    if ! grep -q "\"$path_seg\"" "$mw" 2>/dev/null; then
+      missing+=" $path_seg"
+    fi
+  done
+
+  if [ -z "$missing" ]; then
+    echo "$name|middleware|OK|all pSEO paths in PUBLIC_PATHS"
+  else
+    echo "$name|middleware|GAP|missing pSEO paths:$missing"
+  fi
+}
+
+# Check for branded error handling pages (not-found.tsx, error.tsx)
+check_error_pages() {
+  local name="$1" repo="$2"
+  local app_dir
+  app_dir="$(find_app_dir "$repo")"
+  [ -z "$app_dir" ] && echo "$name|error-pages|MISSING|no app dir" && return
+
+  local has_404 has_error
+  has_404=$(find "$app_dir" -maxdepth 1 -name "not-found.tsx" 2>/dev/null | head -1)
+  has_error=$(find "$app_dir" -maxdepth 1 -name "error.tsx" 2>/dev/null | head -1)
+
+  if [ -n "$has_404" ] && [ -n "$has_error" ]; then
+    echo "$name|error-pages|OK|both not-found.tsx and error.tsx present"
+  elif [ -n "$has_404" ]; then
+    echo "$name|error-pages|GAP|has not-found.tsx but missing error.tsx"
+  elif [ -n "$has_error" ]; then
+    echo "$name|error-pages|GAP|has error.tsx but missing not-found.tsx"
+  else
+    echo "$name|error-pages|MISSING|no not-found.tsx or error.tsx"
+  fi
+}
+
+# Check for validate-env script
+check_validate_env() {
+  local name="$1" repo="$2"
+  local ve
+  ve=$(find "$repo/scripts" -name "validate-env*" 2>/dev/null | head -1)
+  if [ -n "$ve" ]; then
+    echo "$name|validate-env|OK|$ve"
+  else
+    echo "$name|validate-env|MISSING|no validate-env script in scripts/"
+  fi
+}
+
 # ==============================================================================
 # MAIN — iterate fleet manifest and run selected checks
 # ==============================================================================
@@ -179,16 +239,22 @@ for clone in $CLONES; do
   TOTAL=$((TOTAL + 1))
 
   case "$CHECK_TARGET" in
-    pricing)  result=$(check_pricing "$clone" "$repo") ;;
-    checkout) result=$(check_checkout "$clone" "$repo") ;;
-    sitemap)  result=$(check_sitemap "$clone" "$repo") ;;
-    env)      result=$(check_env "$clone" "$repo") ;;
+    pricing)      result=$(check_pricing "$clone" "$repo") ;;
+    checkout)     result=$(check_checkout "$clone" "$repo") ;;
+    sitemap)      result=$(check_sitemap "$clone" "$repo") ;;
+    env)          result=$(check_env "$clone" "$repo") ;;
+    middleware)   result=$(check_middleware "$clone" "$repo") ;;
+    error-pages)  result=$(check_error_pages "$clone" "$repo") ;;
+    validate-env) result=$(check_validate_env "$clone" "$repo") ;;
     all)
       result=""
       result+="$(check_pricing "$clone" "$repo")\n"
       result+="$(check_checkout "$clone" "$repo")\n"
       result+="$(check_sitemap "$clone" "$repo")\n"
-      result+="$(check_env "$clone" "$repo")"
+      result+="$(check_env "$clone" "$repo")\n"
+      result+="$(check_middleware "$clone" "$repo")\n"
+      result+="$(check_error_pages "$clone" "$repo")\n"
+      result+="$(check_validate_env "$clone" "$repo")"
       ;;
   esac
 
