@@ -269,12 +269,24 @@ check_og_image() {
 # Without this, homepage PageRank never flows to pSEO pages.
 check_seo_links() {
   local name="$1" repo="$2"
-  # Find the actual landing page (not a redirect)
+  # Find the actual landing page (not a redirect-only stub)
+  # Uses grep on non-comment lines to avoid false positives from comments
+  # that mention redirect() but don't actually call it.
   local page=""
   for candidate in "$repo/src/app/page.tsx" "$repo/app/page.tsx"; do
     if [ -f "$candidate" ]; then
-      if grep -q "redirect(" "$candidate" 2>/dev/null; then
-        continue  # Skip redirect pages
+      # Check if it's a redirect stub: has actual redirect() call (not in comments)
+      # and is short (under 50 non-empty lines = stub, not real content page)
+      local non_comment_redirect
+      non_comment_redirect=$(grep -v '^\s*//' "$candidate" | grep -v '^\s*\*' | grep -c "redirect(" 2>/dev/null || true)
+      non_comment_redirect=${non_comment_redirect:-0}
+      non_comment_redirect=$(echo "$non_comment_redirect" | tr -d '[:space:]')
+      local line_count
+      line_count=$(wc -l < "$candidate" 2>/dev/null || true)
+      line_count=${line_count:-0}
+      line_count=$(echo "$line_count" | tr -d '[:space:]')
+      if [ "$non_comment_redirect" -gt 0 ] && [ "$line_count" -lt 50 ]; then
+        continue  # Skip redirect stubs
       fi
       page="$candidate"
       break
