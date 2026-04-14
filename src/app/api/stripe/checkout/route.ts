@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
             quantity: 1,
           },
         ],
-        success_url: `${appUrl}/dashboard?checkout=success`,
+        success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/#pricing`,
         metadata: {
           userEmail: session.user.email,

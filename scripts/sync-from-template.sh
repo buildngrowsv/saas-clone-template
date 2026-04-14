@@ -51,6 +51,7 @@ ALLOW_LIST=(
   "src/components/WatermarkOverlay.tsx"
   "src/components/CookieConsentBanner.tsx"
   "src/components/BreadcrumbJsonLd.tsx"
+  "src/app/checkout/success/page.tsx"
   "src/lib/ga4-public-env.ts"
 )
 
