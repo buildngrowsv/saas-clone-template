@@ -98,19 +98,44 @@ export const metadata: Metadata = {
  * derived from PRODUCT_CONFIG so each clone automatically gets correct
  * structured data without manual edits.
  */
+/**
+ * Combined JSON-LD graph: SoftwareApplication + Organization.
+ *
+ * Using @graph puts multiple schema types in one script tag, which is
+ * cleaner and avoids duplicate ld+json blocks. Google treats them the same.
+ *
+ * SoftwareApplication → rich snippet for the product (name, category, pricing).
+ * Organization → brand entity so Google's Knowledge Panel can associate
+ * the site with the company (logo, URL, social profiles).
+ */
 const jsonLdStructuredData = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: PRODUCT_CONFIG.name,
-  description: PRODUCT_CONFIG.description,
-  applicationCategory: "MultimediaApplication",
-  operatingSystem: "Web",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-    description: "Free tier available. Pro plans for unlimited use.",
-  },
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: PRODUCT_CONFIG.name,
+      description: PRODUCT_CONFIG.description,
+      applicationCategory: "MultimediaApplication",
+      operatingSystem: "Web",
+      url: siteConfig.siteUrl,
+      offers: {
+        "@type": "AggregateOffer",
+        lowPrice: "0",
+        highPrice: "29",
+        priceCurrency: "USD",
+        offerCount: "3",
+        description: "Free tier with starter credits. Pro plans from $9/mo.",
+      },
+    },
+    {
+      "@type": "Organization",
+      name: PRODUCT_CONFIG.name,
+      url: siteConfig.siteUrl,
+      ...(siteConfig.supportEmail
+        ? { contactPoint: { "@type": "ContactPoint", email: siteConfig.supportEmail, contactType: "customer support" } }
+        : {}),
+    },
+  ],
 };
 
 export default function RootLayout({
