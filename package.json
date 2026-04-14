@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 4837",
-    "build": "next build",
+    "build": "node scripts/validate-env-configuration.mjs && next build",
     "start": "next start -p 4837",
     "lint": "next lint",
     "test:stamp": "bash ./scripts/stamp-tests.sh",
@@ -12,9 +12,16 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "verify": "npm run build && echo '✅ Build passes — safe to push'",
+    "verify": "bash scripts/verify-clone.sh",
+    "verify:quick": "bash scripts/verify-clone.sh --skip-build",
     "check:secrets": "bash scripts/check-secrets.sh --all",
-    "env:validate": "node scripts/validate-env-configuration.mjs"
+    "validate-env": "node scripts/validate-env-configuration.mjs",
+    "env:validate": "node scripts/validate-env-configuration.mjs",
+    "stripe:setup": "node scripts/create-stripe-products-and-prices.mjs",
+    "fleet:sync": "bash scripts/fleet-sync-all.sh",
+    "fleet:db-push": "bash scripts/fleet-db-push.sh",
+    "generate:seo": "node scripts/run-ts.mjs scripts/generate-seo-pages.ts",
+    "generate:seo:clean": "rm -rf src/app/vs src/app/for src/app/use-cases src/app/seo src/lib/seo-sitemap-paths.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1015.0",
