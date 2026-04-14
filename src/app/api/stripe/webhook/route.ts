@@ -25,7 +25,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { stripeServerClient } from "@/lib/stripe";
-import { PRODUCT_CONFIG } from "@/lib/config";
+import { PRODUCT_CONFIG, deriveProductSlug } from "@/lib/config";
 import { db } from "@/db";
 import { userProfiles } from "@/db/schema/users";
 import { subscriptions } from "@/db/schema/subscriptions";
@@ -39,10 +39,7 @@ import Stripe from "stripe";
  * All DB queries in this webhook handler are filtered by this slug to prevent
  * cross-product data collisions when clones share a single Neon database.
  */
-const PRODUCT_SLUG: string =
-  PRODUCT_CONFIG.name && PRODUCT_CONFIG.name !== "AI Tool Name"
-    ? PRODUCT_CONFIG.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
-    : "default";
+const PRODUCT_SLUG = deriveProductSlug(PRODUCT_CONFIG.name);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

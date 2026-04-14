@@ -27,7 +27,7 @@
  * is simpler: fixed subscription tiers with database credit counters.
  */
 
-import { PRODUCT_CONFIG, type ProductPricingTier } from "@/lib/config";
+import { PRODUCT_CONFIG, deriveProductSlug, type ProductPricingTier } from "@/lib/config";
 import { db } from "@/db";
 import { userProfiles } from "@/db/schema/users";
 import { creditTransactions } from "@/db/schema/credit-transactions";
@@ -41,10 +41,7 @@ import { eq, and, gte, sql } from "drizzle-orm";
  * For standalone deployments this is just "default" (matching the DB column
  * default), so single-product setups work identically to before.
  */
-const PRODUCT_SLUG: string =
-  PRODUCT_CONFIG.name && PRODUCT_CONFIG.name !== "AI Tool Name"
-    ? PRODUCT_CONFIG.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
-    : "default";
+const PRODUCT_SLUG = deriveProductSlug(PRODUCT_CONFIG.name);
 
 /**
  * Subscription tier names — must match the keys in PRODUCT_CONFIG.pricing.

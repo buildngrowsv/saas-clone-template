@@ -106,6 +106,16 @@ export interface ProductConfiguration {
  * 2. It needs to be available at build time for static generation of the landing page
  * 3. Keeping it in code means it's version-controlled and auditable
  */
+/**
+ * Derives a URL-safe slug from the product name for database namespacing.
+ * Used by the shared fleet database to scope user_profiles, credit_transactions,
+ * and subscriptions per product. Returns "default" for the unmodified template.
+ */
+export function deriveProductSlug(name: string): string {
+  if (!name || name === "AI Tool Name") return "default";
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export const PRODUCT_CONFIG: ProductConfiguration = {
   name: "AI Tool Name",
   tagline: "Transform your images with one click",
