@@ -78,8 +78,8 @@ const REQUIRED_VARS = [
   { name: "STRIPE_SECRET_KEY", description: "Stripe secret API key (sk_live_* or sk_test_*)" },
   { name: "STRIPE_PUBLISHABLE_KEY", description: "Stripe publishable key (pk_live_* or pk_test_*) — also aliased as NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in stripe.ts" },
   { name: "STRIPE_WEBHOOK_SECRET", description: "Stripe webhook signing secret (whsec_*)" },
-  { name: "STRIPE_PRICE_BASIC", description: "Stripe price ID for Basic tier" },
-  { name: "STRIPE_PRICE_PRO", description: "Stripe price ID for Pro tier" },
+  { name: "STRIPE_PRICE_BASIC", description: "Stripe price ID for Basic tier", aliases: ["STRIPE_PRICE_ID"] },
+  { name: "STRIPE_PRICE_PRO", description: "Stripe price ID for Pro tier", aliases: ["STRIPE_PRICE_ID_PRO"] },
   { name: "FAL_KEY", description: "fal.ai API key for AI image generation" },
 ];
 
@@ -151,11 +151,17 @@ let warningMissing = 0;
 console.log(bold("\nCRITICAL (app will not work without these):"));
 for (const v of REQUIRED_VARS) {
   const val = process.env[v.name];
-  if (val && val.trim()) {
-    console.log(green(`  PASS  ${v.name}`));
+  /* Fleet compatibility: some clones use different env var names for the same
+     setting (e.g. STRIPE_PRICE_ID_PRO instead of STRIPE_PRICE_PRO). Check
+     aliases before failing. Builder 3, 2026-04-14. */
+  const aliasVal = v.aliases?.map((a) => process.env[a]).find((a) => a && a.trim());
+  if ((val && val.trim()) || aliasVal) {
+    const usedName = (val && val.trim()) ? v.name : v.aliases?.find((a) => process.env[a]?.trim());
+    console.log(green(`  PASS  ${v.name}${usedName !== v.name ? ` (via ${usedName})` : ""}`));
     criticalSet++;
   } else {
-    console.error(red(`  FAIL  ${v.name} -- ${v.description}`));
+    const aliasHint = v.aliases?.length ? ` (also checked: ${v.aliases.join(", ")})` : "";
+    console.error(red(`  FAIL  ${v.name} -- ${v.description}${aliasHint}`));
     criticalMissing++;
     exitCode = 1;
   }

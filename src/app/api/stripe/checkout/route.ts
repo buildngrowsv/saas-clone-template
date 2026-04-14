@@ -42,12 +42,23 @@ import {
  * By using env vars, we can deploy the same code to staging (test mode)
  * and production (live mode) with different .env files.
  */
+/**
+ * FLEET COMPATIBILITY (Builder 3, 2026-04-14):
+ * 29/42 fleet clones use `STRIPE_PRICE_ID_PRO` instead of the template's
+ * `STRIPE_PRICE_PRO`. Rather than updating 29 repos, the template now
+ * checks both names with the template-standard name taking priority.
+ * This means fleet automation can set EITHER name and checkout will work.
+ *
+ * Single-tier clones that only have a "pro" plan also work: when `basic`
+ * is unset they'll get a 500 on that tier only, which is correct — those
+ * clones don't offer a basic tier.
+ */
 function getStripePriceIdForTier(
   subscriptionTier: "basic" | "pro"
 ): string | undefined {
   const tierToPriceIdMapping: Record<string, string | undefined> = {
-    basic: process.env.STRIPE_PRICE_BASIC,
-    pro: process.env.STRIPE_PRICE_PRO,
+    basic: process.env.STRIPE_PRICE_BASIC || process.env.STRIPE_PRICE_ID,
+    pro: process.env.STRIPE_PRICE_PRO || process.env.STRIPE_PRICE_ID_PRO,
   };
 
   return tierToPriceIdMapping[subscriptionTier];
