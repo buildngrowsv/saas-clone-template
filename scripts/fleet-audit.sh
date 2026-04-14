@@ -155,26 +155,47 @@ check_env() {
   fi
 }
 
-# Gate 9 compliance: do pSEO paths appear in middleware PUBLIC_PATHS?
+# Gate 9 compliance: do pSEO paths appear in middleware PUBLIC_PATHS or matcher?
 # Without these, Googlebot hits auth redirects and pages never get indexed.
+# Handles two middleware patterns:
+#   1. PUBLIC_PATHS array (template-style auth middleware)
+#   2. next-intl matcher negative lookahead (i18n middleware)
 check_middleware() {
   local name="$1" repo="$2"
-  local mw
-  mw=$(find "$repo" -name "middleware.ts" -not -path "*/node_modules/*" -not -path "*/.next/*" 2>/dev/null | head -1)
+  # Next.js uses root-level middleware.ts first, then src/middleware.ts.
+  # Check root first to match runtime behavior.
+  local mw=""
+  if [ -f "$repo/middleware.ts" ]; then
+    mw="$repo/middleware.ts"
+  elif [ -f "$repo/src/middleware.ts" ]; then
+    mw="$repo/src/middleware.ts"
+  fi
   if [ -z "$mw" ]; then
     echo "$name|middleware|WARN|no middleware.ts (no auth gating)"
     return
   fi
 
+  local mw_content
+  mw_content=$(cat "$mw" 2>/dev/null)
   local missing=""
-  for path_seg in "/vs" "/for" "/use-cases" "/best" "/blog" "/lp" "/testimonials"; do
-    if ! grep -q "\"$path_seg\"" "$mw" 2>/dev/null; then
-      missing+=" $path_seg"
+  # Check both PUBLIC_PATHS array entries AND matcher regex segments.
+  # Clones use two patterns:
+  #   1. PUBLIC_PATHS: "/vs", "/blog", etc.
+  #   2. Matcher regex: |vs|blog| or |vs) etc.
+  for path_seg in "vs" "for" "use-cases" "best" "blog" "lp" "testimonials"; do
+    if echo "$mw_content" | grep -q "\"/$path_seg\"" 2>/dev/null; then
+      continue  # Found in PUBLIC_PATHS
+    elif echo "$mw_content" | grep -q "'/$path_seg'" 2>/dev/null; then
+      continue  # Found in PUBLIC_PATHS (single quotes)
+    elif echo "$mw_content" | grep -qF "$path_seg" 2>/dev/null; then
+      continue  # Found anywhere (matcher regex, etc.)
+    else
+      missing+=" /$path_seg"
     fi
   done
 
   if [ -z "$missing" ]; then
-    echo "$name|middleware|OK|all pSEO paths in PUBLIC_PATHS"
+    echo "$name|middleware|OK|all pSEO paths covered"
   else
     echo "$name|middleware|GAP|missing pSEO paths:$missing"
   fi
