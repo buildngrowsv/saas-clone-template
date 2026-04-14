@@ -43,6 +43,7 @@ ALLOW_LIST=(
   "src/app/api/health/route.ts"
   "src/app/not-found.tsx"
   "src/app/error.tsx"
+  "src/app/global-error.tsx"
   "src/app/robots.ts"
   "src/app/opengraph-image.tsx"
   "src/app/twitter-image.tsx"
