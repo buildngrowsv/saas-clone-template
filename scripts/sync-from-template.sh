@@ -36,8 +36,13 @@ ALLOW_LIST=(
   "scripts/check-secrets.sh"
   "scripts/stamp-tests.sh"
   "scripts/install-secret-guard-hook.sh"
+  "scripts/merge-pseo-middleware-paths.mjs"
+  "scripts/merge-security-headers.mjs"
   "testing/templates/e2e/smoke.spec.ts"
   "src/app/api/health/route.ts"
+  "src/app/not-found.tsx"
+  "src/app/error.tsx"
+  "src/app/robots.ts"
 )
 
 # NOTE (Builder 1, iron-viper-6183, T19 pane1775, 2026-04-08):
