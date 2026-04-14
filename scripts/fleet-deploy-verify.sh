@@ -122,7 +122,7 @@ check_domain() {
 
   if [[ "$status" == "200" ]]; then
     echo -n "  [PASS] $domain -> HTTP $status"
-    ((PASS++))
+    PASS=$((PASS + 1))
 
     # If checking for a specific string
     if [[ -n "$CHECK_STRING" ]]; then
@@ -132,15 +132,15 @@ check_domain() {
         echo " | '$CHECK_STRING' found"
       else
         echo " | '$CHECK_STRING' NOT FOUND — deploy may be stale"
-        ((FAIL++))
-        ((PASS--))
+        FAIL=$((FAIL + 1))
+        PASS=$((PASS - 1))
       fi
     else
       echo ""
     fi
   else
     echo "  [FAIL] $domain -> HTTP $status"
-    ((FAIL++))
+    FAIL=$((FAIL + 1))
   fi
 }
 
