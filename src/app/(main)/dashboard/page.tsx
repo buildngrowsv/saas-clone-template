@@ -94,7 +94,11 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Credits Balance</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{dashData?.credits ?? 0}</p>
+            {dashData ? (
+              <p className="text-3xl font-bold">{dashData.credits}</p>
+            ) : (
+              <div className="h-9 w-16 bg-muted animate-pulse rounded" />
+            )}
           </CardContent>
         </Card>
 
@@ -103,9 +107,13 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Current Plan</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge className={`text-sm ${planColors[dashData?.plan || "free"]}`}>
-              {(dashData?.plan || "free").charAt(0).toUpperCase() + (dashData?.plan || "free").slice(1)}
-            </Badge>
+            {dashData ? (
+              <Badge className={`text-sm ${planColors[dashData.plan || "free"]}`}>
+                {(dashData.plan || "free").charAt(0).toUpperCase() + (dashData.plan || "free").slice(1)}
+              </Badge>
+            ) : (
+              <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
+            )}
           </CardContent>
         </Card>
       </div>
