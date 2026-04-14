@@ -29,6 +29,7 @@ import { PricingCards } from "@/components/PricingCards";
 import { LandingFaqSection } from "@/components/LandingFaqSection";
 import { LandingFooter } from "@/components/LandingFooter";
 import { LandingDemoSection } from "@/components/LandingDemoSection";
+import { SeoInternalLinks } from "@/components/SeoInternalLinks";
 import { PRODUCT_CONFIG } from "@/lib/config";
 
 export default function LandingPage() {
@@ -120,6 +121,19 @@ export default function LandingPage() {
 
       {/* FAQ section */}
       <LandingFaqSection />
+
+      {/*
+        Internal SEO links — mesh linking to all pSEO pages (/vs/, /for/, /use-cases/).
+        WHY HERE: The homepage has the highest PageRank of any page on the site.
+        Placing internal links here distributes that authority to pSEO pages,
+        helping them rank in search. Positioned below FAQ so it doesn't distract
+        from conversion flow but is still crawlable and visible to users scrolling.
+      */}
+      <section className="py-12 px-6 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <SeoInternalLinks />
+        </div>
+      </section>
 
       {/* Footer */}
       <LandingFooter />

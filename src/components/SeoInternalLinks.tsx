@@ -17,10 +17,10 @@
  * it supports SEO without distracting from the page's primary CTA.
  *
  * IMPORTED BY:
+ * - src/app/page.tsx (landing page — distributes homepage PageRank to pSEO pages)
  * - src/app/vs/[competitor]/page.tsx
  * - src/app/for/[audience]/page.tsx
  * - src/app/use-cases/[use-case]/page.tsx
- * - Can be added to src/app/page.tsx (landing page) footer area
  */
 
 import Link from "next/link";
