@@ -404,6 +404,7 @@ export async function POST(request: NextRequest) {
       resultUrl: processedImageUrl,
       remainingCredits: updatedCreditCheck.remainingCreditsCount,
       tierLimit: updatedCreditCheck.tierCreditLimit,
+      isPaidUser: userSubscriptionTier === "basic" || userSubscriptionTier === "pro",
     });
   } catch (generationError) {
     console.error("Generation API error:", generationError);
