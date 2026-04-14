@@ -124,6 +124,14 @@ function checkAuthRateLimit(request: NextRequest): NextResponse | null {
  * that happen before the user has a session. The /api/stripe/webhook path
  * must be public because Stripe sends events directly (no user session).
  */
+/**
+ * FLEET COMPATIBILITY NOTE (Builder 3, 2026-04-14):
+ * Any marketing, SEO, or content page MUST be in this list. Auth-gating
+ * pSEO pages kills traffic — Googlebot hits the auth redirect and the
+ * page never gets indexed. When adding new pSEO route patterns (e.g.
+ * /best/, /alternatives/, /lp/), add them here AND to the matcher
+ * negative lookahead below. See Gate 9 in clone-factory-quality-gates.md.
+ */
 const PUBLIC_PATHS = [
   "/",
   "/pricing",
@@ -139,8 +147,14 @@ const PUBLIC_PATHS = [
   "/vs",
   "/for",
   "/use-cases",
+  "/best",
+  "/blog",
+  "/lp",
+  "/testimonials",
+  "/ai-",
   "/api/auth",
   "/api/stripe/webhook",
+  "/api/health",
 ];
 
 export function middleware(request: NextRequest) {
@@ -214,6 +228,6 @@ export const config = {
      * Both path variants are included (/privacy + /privacy-policy, /terms +
      * /terms-of-service) because the fleet uses both naming conventions.
      */
-    "/((?!_next/static|_next/image|favicon.ico|api|pricing|privacy-policy|privacy|terms-of-service|terms|refund-policy|refund|get-started|vs|for|use-cases|.*\\..*).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api|pricing|privacy-policy|privacy|terms-of-service|terms|refund-policy|refund|get-started|vs|for|use-cases|best|blog|lp|testimonials|ai-|.*\\..*).*)",
   ],
 };
