@@ -191,7 +191,7 @@ export default async function CompetitorComparisonPage({
         items={[
           { name: "Home", url: siteConfig.siteUrl },
           { name: "Alternatives", url: `${siteConfig.siteUrl}/vs` },
-          { name: `vs ${competitorData.name}`, url: `${siteConfig.siteUrl}/vs/${competitorData.slug}` },
+          { name: `vs ${competitorEntry.name}`, url: `${siteConfig.siteUrl}/vs/${competitorEntry.slug}` },
         ]}
       />
       {/* JSON-LD FAQPage structured data — earns rich snippets in Google */}
