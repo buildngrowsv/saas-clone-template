@@ -28,8 +28,9 @@ import { stripeServerClient } from "@/lib/stripe";
 import { db } from "@/db";
 import { userProfiles } from "@/db/schema/users";
 import { subscriptions } from "@/db/schema/subscriptions";
+import { creditTransactions } from "@/db/schema/credit-transactions";
 import { addCredits, type SubscriptionTier } from "@/lib/credits";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -227,14 +228,18 @@ export async function POST(request: NextRequest) {
           checkoutSession.customer_details?.email;
 
         if (!userId) {
+          /**
+           * Missing userId means the checkout creation route didn't set metadata
+           * correctly — this is a developer integration bug, not a transient error.
+           * Return 200 to prevent Stripe from retrying this event forever (it would
+           * never succeed without a code fix). Log as error for investigation.
+           */
           console.error(
-            "[Stripe Webhook] checkout.session.completed missing userId in metadata.",
+            "[Stripe Webhook] checkout.session.completed missing userId in metadata. " +
+              "Returning 200 to prevent retry storm. Fix the checkout route to include userId in metadata.",
             { sessionId: checkoutSession.id }
           );
-          return NextResponse.json(
-            { error: "Missing userId in checkout metadata" },
-            { status: 400 }
-          );
+          return NextResponse.json({ received: true, warning: "missing userId in metadata" });
         }
 
         const stripeCustomerId =
@@ -385,6 +390,32 @@ export async function POST(request: NextRequest) {
          * The subscription field is present on recurring invoices.
          */
         if (invoice.subscription) {
+          /**
+           * IDEMPOTENCY GUARD: Stripe may deliver invoice.paid more than once
+           * (webhook retries on network errors, multiple endpoint configs, etc.).
+           * Check if we already processed this exact invoice by searching for a
+           * credit transaction with this invoice ID as the reason.
+           * Without this guard, duplicate deliveries = double credits.
+           */
+          const invoiceId = invoice.id;
+          const existingTransaction = await db
+            .select({ id: creditTransactions.id })
+            .from(creditTransactions)
+            .where(
+              and(
+                eq(creditTransactions.userId, userId),
+                eq(creditTransactions.reason, `invoice_paid:${invoiceId}`)
+              )
+            )
+            .limit(1);
+
+          if (existingTransaction.length > 0) {
+            console.log(
+              `[Stripe Webhook] invoice.paid: Already processed invoice ${invoiceId} for userId=${userId}, skipping duplicate`
+            );
+            break;
+          }
+
           const subscriptionId =
             typeof invoice.subscription === "string"
               ? invoice.subscription
@@ -397,10 +428,10 @@ export async function POST(request: NextRequest) {
             stripeSubscription.items.data[0]?.price.id ?? "";
           const { plan, credits } = getPlanFromPriceId(priceId);
 
-          await addCredits(userId, credits, plan);
+          await addCredits(userId, credits, plan, `invoice_paid:${invoiceId}`);
 
           console.log(
-            `[Stripe Webhook] invoice.paid: userId=${userId}, refreshed ${credits} credits for ${plan}`
+            `[Stripe Webhook] invoice.paid: userId=${userId}, refreshed ${credits} credits for ${plan}, invoice=${invoiceId}`
           );
         }
         break;

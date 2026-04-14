@@ -260,17 +260,20 @@ export async function deductOneCreditForUser(
 export async function addCredits(
   userId: string,
   creditAmount: number,
-  subscriptionTier: SubscriptionTier
+  subscriptionTier: SubscriptionTier,
+  reason?: string
 ): Promise<void> {
   await ensureUserProfile(userId);
 
   /**
    * Record the credit addition in the audit log.
+   * The reason field doubles as an idempotency key for invoice.paid events —
+   * the webhook checks for existing transactions with the same reason before calling.
    */
   await db.insert(creditTransactions).values({
     userId,
     amount: creditAmount,
-    reason: `subscription_renewal:${subscriptionTier}`,
+    reason: reason ?? `subscription_renewal:${subscriptionTier}`,
   });
 
   /**
