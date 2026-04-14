@@ -19,7 +19,10 @@
     "env:validate": "node scripts/validate-env-configuration.mjs",
     "stripe:setup": "node scripts/create-stripe-products-and-prices.mjs",
     "fleet:sync": "bash scripts/fleet-sync-all.sh",
+    "fleet:audit": "bash scripts/fleet-audit.sh",
+    "fleet:audit:json": "bash scripts/fleet-audit.sh --json",
     "fleet:db-push": "bash scripts/fleet-db-push.sh",
+    "fleet:fix-middleware": "node scripts/merge-pseo-middleware-paths.mjs",
     "generate:seo": "node scripts/run-ts.mjs scripts/generate-seo-pages.ts",
     "generate:seo:clean": "rm -rf src/app/vs src/app/for src/app/use-cases src/app/seo src/lib/seo-sitemap-paths.ts"
   },
