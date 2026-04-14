@@ -50,6 +50,7 @@ ALLOW_LIST=(
   "src/components/GoogleAnalytics.tsx"
   "src/components/WatermarkOverlay.tsx"
   "src/components/CookieConsentBanner.tsx"
+  "src/components/BreadcrumbJsonLd.tsx"
   "src/lib/ga4-public-env.ts"
 )
 
