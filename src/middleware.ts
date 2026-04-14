@@ -137,6 +137,8 @@ const PUBLIC_PATHS = [
   "/refund-policy",
   "/refund",
   "/vs",
+  "/for",
+  "/use-cases",
   "/api/auth",
   "/api/stripe/webhook",
 ];
@@ -212,6 +214,6 @@ export const config = {
      * Both path variants are included (/privacy + /privacy-policy, /terms +
      * /terms-of-service) because the fleet uses both naming conventions.
      */
-    "/((?!_next/static|_next/image|favicon.ico|api|privacy-policy|privacy|terms-of-service|terms|refund-policy|refund|get-started|vs|.*\\..*).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api|privacy-policy|privacy|terms-of-service|terms|refund-policy|refund|get-started|vs|for|use-cases|.*\\..*).*)",
   ],
 };
