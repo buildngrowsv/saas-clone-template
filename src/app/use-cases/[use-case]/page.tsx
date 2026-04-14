@@ -37,6 +37,7 @@ import { SEO_PAGES_CONFIG } from "@/config/seo-pages";
 import { PRODUCT_CONFIG } from "@/lib/config";
 import { siteConfig } from "@/config/site";
 import { SeoInternalLinks } from "@/components/SeoInternalLinks";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
 interface UseCasePageProps {
   params: Promise<{ "use-case": string }>;
@@ -176,6 +177,14 @@ export default async function UseCaseGuidePage({
 
   return (
     <>
+      {/* BreadcrumbList — shows "Home > Use Cases > Case Name" in SERPs */}
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: siteConfig.siteUrl },
+          { name: "Use Cases", url: `${siteConfig.siteUrl}/use-cases` },
+          { name: useCaseEntry.name, url: `${siteConfig.siteUrl}/use-cases/${useCaseEntry.slug}` },
+        ]}
+      />
       {/* JSON-LD HowTo schema — earns step-by-step rich results in Google */}
       <script
         type="application/ld+json"

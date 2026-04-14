@@ -35,6 +35,7 @@ import { SEO_PAGES_CONFIG } from "@/config/seo-pages";
 import { PRODUCT_CONFIG } from "@/lib/config";
 import { siteConfig } from "@/config/site";
 import { SeoInternalLinks } from "@/components/SeoInternalLinks";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
 interface CompetitorPageProps {
   params: Promise<{ competitor: string }>;
@@ -185,6 +186,14 @@ export default async function CompetitorComparisonPage({
 
   return (
     <>
+      {/* BreadcrumbList — shows "Home > Alternatives > vs Competitor" in SERPs */}
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: siteConfig.siteUrl },
+          { name: "Alternatives", url: `${siteConfig.siteUrl}/vs` },
+          { name: `vs ${competitorData.name}`, url: `${siteConfig.siteUrl}/vs/${competitorData.slug}` },
+        ]}
+      />
       {/* JSON-LD FAQPage structured data — earns rich snippets in Google */}
       <script
         type="application/ld+json"

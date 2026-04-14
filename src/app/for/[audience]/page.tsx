@@ -31,6 +31,7 @@ import { SEO_PAGES_CONFIG } from "@/config/seo-pages";
 import { PRODUCT_CONFIG } from "@/lib/config";
 import { siteConfig } from "@/config/site";
 import { SeoInternalLinks } from "@/components/SeoInternalLinks";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
 interface AudiencePageProps {
   params: Promise<{ audience: string }>;
@@ -142,6 +143,14 @@ export default async function AudienceLandingPage({
 
   return (
     <>
+      {/* BreadcrumbList — shows "Home > For > Audience" in SERPs */}
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: siteConfig.siteUrl },
+          { name: "For", url: `${siteConfig.siteUrl}/for` },
+          { name: audienceEntry.name, url: `${siteConfig.siteUrl}/for/${audienceEntry.slug}` },
+        ]}
+      />
       {/* JSON-LD FAQPage structured data for Google rich snippets */}
       <script
         type="application/ld+json"
