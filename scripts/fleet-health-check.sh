@@ -50,29 +50,35 @@ for repo_path in "$GITHUB_DIR"/ai-*/; do
   build_line=$(grep '"build":' "$repo_path/package.json" 2>/dev/null || true)
   if echo "$build_line" | grep -q 'validate-env'; then VE="Y"; score=$((score + 1)); else VE="N"; fi
 
+  # FIX (flux-exec-4419, 2026-04-14): Search BOTH src/app/ AND app/ for all
+  # checks. Many clones use root-level app/ (no src/ prefix) due to i18n or
+  # project structure differences. Hardcoding src/ caused false negatives on
+  # 5+ repos that actually had the features. Same fix documented in
+  # continuous-improvement-master.md root cause table.
+
   # ROB: robots.txt or robots.ts
-  if [ -f "$repo_path/public/robots.txt" ] || [ -f "$repo_path/src/app/robots.ts" ]; then
+  if [ -f "$repo_path/public/robots.txt" ] || [ -f "$repo_path/src/app/robots.ts" ] || [ -f "$repo_path/app/robots.ts" ]; then
     ROB="Y"; score=$((score + 1))
   else ROB="N"; fi
 
   # SIT: sitemap
-  sit_file=$(find "$repo_path/src/app" -name 'sitemap*' -type f 2>/dev/null | head -1)
+  sit_file=$(find "$repo_path/src/app" "$repo_path/app" -name 'sitemap*' -type f 2>/dev/null | head -1)
   if [ -n "$sit_file" ]; then SIT="Y"; score=$((score + 1)); else SIT="N"; fi
 
   # 404: not-found page
-  nf_file=$(find "$repo_path/src/app" -name 'not-found*' -type f 2>/dev/null | head -1)
+  nf_file=$(find "$repo_path/src/app" "$repo_path/app" -name 'not-found*' -type f 2>/dev/null | head -1)
   if [ -n "$nf_file" ]; then NF="Y"; score=$((score + 1)); else NF="N"; fi
 
   # ERR: error page
-  err_file=$(find "$repo_path/src/app" -name 'error*' -type f 2>/dev/null | head -1)
+  err_file=$(find "$repo_path/src/app" "$repo_path/app" -name 'error*' -type f 2>/dev/null | head -1)
   if [ -n "$err_file" ]; then ERR="Y"; score=$((score + 1)); else ERR="N"; fi
 
-  # GA4: Google Analytics component
-  ga_file=$(find "$repo_path/src" -name '*oogleAnalytics*' -type f 2>/dev/null | head -1)
+  # GA4: Google Analytics component (search src/, components/, app/)
+  ga_file=$(find "$repo_path/src" "$repo_path/components" "$repo_path/app" -name '*oogleAnalytics*' -type f 2>/dev/null | head -1)
   if [ -n "$ga_file" ]; then GA4="Y"; score=$((score + 1)); else GA4="N"; fi
 
-  # COO: Cookie consent
-  coo_file=$(find "$repo_path/src" -name '*ookie*onsent*' -type f 2>/dev/null | head -1)
+  # COO: Cookie consent (search src/, components/, app/)
+  coo_file=$(find "$repo_path/src" "$repo_path/components" "$repo_path/app" -name '*ookie*onsent*' -type f 2>/dev/null | head -1)
   if [ -n "$coo_file" ]; then COO="Y"; score=$((score + 1)); else COO="N"; fi
 
   # SEC: Security headers
@@ -81,17 +87,17 @@ for repo_path in "$GITHUB_DIR"/ai-*/; do
     SEC="Y"; score=$((score + 1))
   else SEC="N"; fi
 
-  # LEG: Legal pages (privacy + terms)
-  priv=$(find "$repo_path/src/app" -name 'privacy*' -type f 2>/dev/null -o -name 'privacy*' -type d 2>/dev/null | head -1)
-  terms=$(find "$repo_path/src/app" -name 'terms*' -type f 2>/dev/null -o -name 'terms*' -type d 2>/dev/null | head -1)
+  # LEG: Legal pages (privacy + terms) — search both src/app/ and app/
+  priv=$(find "$repo_path/src/app" "$repo_path/app" -name 'privacy*' -type f 2>/dev/null -o -name 'privacy*' -type d 2>/dev/null | head -1)
+  terms=$(find "$repo_path/src/app" "$repo_path/app" -name 'terms*' -type f 2>/dev/null -o -name 'terms*' -type d 2>/dev/null | head -1)
   if [ -n "$priv" ] && [ -n "$terms" ]; then LEG="Y"; score=$((score + 1)); else LEG="N"; fi
 
-  # JLD: JSON-LD structured data
-  jld=$(grep -rl 'application/ld+json\|schema.org' "$repo_path/src/" 2>/dev/null | head -1)
+  # JLD: JSON-LD structured data — search src/ AND app/
+  jld=$(grep -rl 'application/ld+json\|schema.org' "$repo_path/src/" "$repo_path/app/" 2>/dev/null | head -1)
   if [ -n "$jld" ]; then JLD="Y"; score=$((score + 1)); else JLD="N"; fi
 
-  # HLT: Health endpoint
-  hlt=$(find "$repo_path/src/app/api" -path '*/health*' -type f 2>/dev/null | head -1)
+  # HLT: Health endpoint — search both src/app/api/ and app/api/
+  hlt=$(find "$repo_path/src/app/api" "$repo_path/app/api" -path '*/health*' -type f 2>/dev/null | head -1)
   if [ -n "$hlt" ]; then HLT="Y"; score=$((score + 1)); else HLT="N"; fi
 
   total_score=$((total_score + score))
