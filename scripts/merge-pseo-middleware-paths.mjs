@@ -40,6 +40,7 @@ const dryRun = !process.argv.includes("--apply");
  * any marketing, legal, or SEO content route.
  */
 const REQUIRED_PUBLIC_PATHS = [
+  "/pricing",
   "/vs",
   "/for",
   "/use-cases",
@@ -49,6 +50,13 @@ const REQUIRED_PUBLIC_PATHS = [
   "/testimonials",
   "/ai-",
   "/api/health",
+  "/privacy-policy",
+  "/privacy",
+  "/terms-of-service",
+  "/terms",
+  "/refund-policy",
+  "/refund",
+  "/get-started",
 ];
 
 /**
@@ -56,7 +64,8 @@ const REQUIRED_PUBLIC_PATHS = [
  * These correspond to the PUBLIC_PATHS entries above.
  */
 const REQUIRED_MATCHER_SEGMENTS = [
-  "vs", "for", "use-cases", "best", "blog", "lp", "testimonials", "ai-",
+  "pricing", "vs", "for", "use-cases", "best", "blog", "lp", "testimonials", "ai-",
+  "privacy-policy", "privacy", "terms-of-service", "terms", "refund-policy", "refund", "get-started",
 ];
 
 if (!fs.existsSync(middlewarePath)) {
