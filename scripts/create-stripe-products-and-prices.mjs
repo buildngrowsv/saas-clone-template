@@ -1,93 +1,172 @@
+#!/usr/bin/env node
 /**
- * Stripe product and price creation script.
+ * create-stripe-products-and-prices.mjs — One-time Stripe product + price setup.
  *
  * Run with: npm run stripe:setup
  *
  * Creates the Products and Prices in your Stripe account that match
- * the pricing configuration in src/config/product.ts.
+ * the pricing tiers the webhook handler expects.
  *
  * WHY THIS SCRIPT:
- * Instead of manually creating products in the Stripe Dashboard and
- * copying price IDs, this script automates the process. It creates
- * products with the correct metadata so the webhook handler can
- * identify plans and packs.
+ * Builder 2's revenue audit (2026-04-13) found ZERO live Stripe price IDs
+ * across the entire fleet. Instead of manually creating products in the
+ * Stripe Dashboard and copying price IDs, this script automates it and
+ * prints the EXACT env var lines you need.
+ *
+ * ENV VAR ALIGNMENT:
+ * The webhook handler (src/app/api/stripe/webhook/route.ts) reads:
+ *   - STRIPE_PRICE_BASIC  → maps to plan "basic", 50 credits/month
+ *   - STRIPE_PRICE_PRO    → maps to plan "pro", 9999 credits/month
+ *
+ * This script outputs those exact env var names so copy-paste works.
+ *
+ * USAGE:
+ *   1. Set STRIPE_SECRET_KEY in .env.local (sk_test_* for test, sk_live_* for prod)
+ *   2. Run: npm run stripe:setup
+ *   3. Copy the printed env vars to .env.local or Vercel/CF dashboard
+ *   4. For production: run again with your live secret key
  *
  * IMPORTANT:
- * - Set STRIPE_SECRET_KEY in .env.local before running
- * - Run this ONCE per Stripe account (test or live)
- * - Copy the output price IDs to your .env.local
- * - For production, run against your live Stripe key
+ *   - Run ONCE per Stripe account (test or live)
+ *   - Running again creates duplicate products (Stripe doesn't dedup by name)
+ *   - Set PRODUCT_NAME env var to customize the product prefix (default: "AI Tool")
  */
 
-import Stripe from "stripe";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
+const appDirectory = path.resolve(scriptDirectory, "..");
+
+/**
+ * Load .env.local so STRIPE_SECRET_KEY is available without manual export.
+ */
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    let value = trimmed.slice(eqIdx + 1).trim();
+    if (!key || Object.prototype.hasOwnProperty.call(process.env, key)) continue;
+    if (
+      value.length >= 2 &&
+      ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'")))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
+
+[".env.local", ".env.production.local", ".env"].forEach((f) =>
+  loadEnvFile(path.join(appDirectory, f))
+);
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.error("STRIPE_SECRET_KEY is not set. Add it to .env.local first.");
+  console.error("ERROR: STRIPE_SECRET_KEY is not set.");
+  console.error("Add it to .env.local or export it before running this script.");
   process.exit(1);
 }
 
+const isLiveKey = process.env.STRIPE_SECRET_KEY.startsWith("sk_live_");
+const keyMode = isLiveKey ? "LIVE" : "TEST";
+
+/**
+ * Dynamic import so the script works even if stripe isn't globally installed —
+ * it's already in the project's node_modules.
+ */
+const { default: Stripe } = await import("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+/**
+ * Product name prefix. Override with PRODUCT_NAME env var to customize
+ * per clone (e.g., "RemoveBG App" or "AI Logo Generator").
+ */
+const productPrefix = process.env.PRODUCT_NAME || "AI Tool";
+
 async function main() {
-  console.log("Creating Stripe products and prices...\n");
+  console.log(`\nCreating Stripe products and prices [${keyMode} mode]...`);
+  console.log(`Product prefix: "${productPrefix}"\n`);
 
   /**
    * SUBSCRIPTION PLANS
-   * Each plan gets a Product and a recurring monthly Price.
-   * The Price metadata includes { plan: "basic" } which the webhook uses
-   * to determine credit allocations.
+   *
+   * These MUST match the webhook handler's getPlanFromPriceId():
+   *   - STRIPE_PRICE_BASIC → plan "basic", 50 credits
+   *   - STRIPE_PRICE_PRO   → plan "pro", 9999 credits (effectively unlimited)
+   *
+   * Pricing:
+   *   - Basic: $9/month (market-rate per bookmark intel research)
+   *   - Pro: $29/month
    */
   const subscriptionPlans = [
-    { id: "basic", name: "Basic Plan", price: 999, credits: 500 },
-    { id: "standard", name: "Standard Plan", price: 2999, credits: 2000 },
-    { id: "pro", name: "Pro Plan", price: 9999, credits: 10000 },
+    {
+      envVar: "STRIPE_PRICE_BASIC",
+      planSlug: "basic",
+      displayName: `${productPrefix} — Basic`,
+      priceInCents: 900,
+      credits: 50,
+    },
+    {
+      envVar: "STRIPE_PRICE_PRO",
+      planSlug: "pro",
+      displayName: `${productPrefix} — Pro`,
+      priceInCents: 2900,
+      credits: 9999,
+    },
   ];
+
+  const outputLines = [];
 
   console.log("SUBSCRIPTION PLANS:");
   for (const plan of subscriptionPlans) {
     const product = await stripe.products.create({
-      name: plan.name,
-      metadata: { plan: plan.id, credits: String(plan.credits) },
+      name: plan.displayName,
+      metadata: {
+        plan: plan.planSlug,
+        credits: String(plan.credits),
+        template: "saas-clone-template",
+      },
     });
+
     const price = await stripe.prices.create({
       product: product.id,
-      unit_amount: plan.price,
+      unit_amount: plan.priceInCents,
       currency: "usd",
       recurring: { interval: "month" },
-      metadata: { plan: plan.id },
+      metadata: { plan: plan.planSlug },
     });
-    const envKey = `NEXT_PUBLIC_STRIPE_PRICE_${plan.id.toUpperCase()}_MONTHLY`;
-    console.log(`  ${envKey}=${price.id}`);
+
+    console.log(`  ${plan.envVar}=${price.id}  (${plan.displayName} — $${plan.priceInCents / 100}/mo)`);
+    outputLines.push(`${plan.envVar}=${price.id}`);
   }
 
-  /**
-   * CREDIT PACKS
-   * Each pack gets a Product and a one-time Price.
-   * The Price metadata includes { pack_type: "starter" } for the webhook.
-   */
-  const creditPacks = [
-    { id: "starter", name: "Starter Credit Pack", price: 1999, credits: 1000 },
-    { id: "growth", name: "Growth Credit Pack", price: 4999, credits: 4000 },
-    { id: "professional", name: "Professional Credit Pack", price: 9999, credits: 12000 },
-  ];
+  console.log("\n────────────────────────────────────────");
+  console.log("Copy these to .env.local or your hosting dashboard:\n");
+  for (const line of outputLines) {
+    console.log(`  ${line}`);
+  }
+  console.log("");
 
-  console.log("\nCREDIT PACKS:");
-  for (const pack of creditPacks) {
-    const product = await stripe.products.create({
-      name: pack.name,
-      metadata: { pack_type: pack.id, credits: String(pack.credits) },
-    });
-    const price = await stripe.prices.create({
-      product: product.id,
-      unit_amount: pack.price,
-      currency: "usd",
-      metadata: { pack_type: pack.id },
-    });
-    const envKey = `NEXT_PUBLIC_STRIPE_PRICE_${pack.id.toUpperCase()}_PACK`;
-    console.log(`  ${envKey}=${price.id}`);
+  if (isLiveKey) {
+    console.log("MODE: LIVE — These are real production prices.");
+    console.log("Set them in Vercel/CF Pages env vars with:");
+    console.log('  printf \'%s\' "price_..." | vercel env add STRIPE_PRICE_BASIC production');
+    console.log('  printf \'%s\' "price_..." | vercel env add STRIPE_PRICE_PRO production');
+  } else {
+    console.log("MODE: TEST — Re-run with a sk_live_* key for production prices.");
   }
 
-  console.log("\n✅ Done! Copy the above values to your .env.local file.");
+  console.log("\nDone.");
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error("Stripe setup failed:", err.message);
+  process.exit(1);
+});
