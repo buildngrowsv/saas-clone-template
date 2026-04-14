@@ -73,6 +73,13 @@ export const subscriptions = pgTable("subscriptions", {
    */
   currentPeriodEnd: timestamp("current_period_end").notNull(),
 
+  /**
+   * Product slug — identifies which clone this subscription belongs to.
+   * Matches user_profiles.productSlug and credit_transactions.productSlug
+   * for the shared fleet database. Enables per-product subscription lookups.
+   */
+  productSlug: text("product_slug").notNull().default("default"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

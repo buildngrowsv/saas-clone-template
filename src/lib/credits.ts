@@ -34,6 +34,19 @@ import { creditTransactions } from "@/db/schema/credit-transactions";
 import { eq, and, gte, sql } from "drizzle-orm";
 
 /**
+ * Product slug — derived from PRODUCT_CONFIG.name to namespace data in a
+ * shared fleet database. Each clone inserts and queries with this slug so
+ * users/transactions from different AI tools never collide.
+ *
+ * For standalone deployments this is just "default" (matching the DB column
+ * default), so single-product setups work identically to before.
+ */
+const PRODUCT_SLUG: string =
+  PRODUCT_CONFIG.name && PRODUCT_CONFIG.name !== "AI Tool Name"
+    ? PRODUCT_CONFIG.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    : "default";
+
+/**
  * Subscription tier names — must match the keys in PRODUCT_CONFIG.pricing.
  * "none" means the user has never subscribed (treated same as "free").
  */
@@ -102,6 +115,7 @@ async function getUsageInCurrentPeriod(
     .where(
       and(
         eq(creditTransactions.userId, userId),
+        eq(creditTransactions.productSlug, PRODUCT_SLUG),
         gte(creditTransactions.createdAt, periodStart)
       )
     );
@@ -124,7 +138,12 @@ async function ensureUserProfile(
   const existing = await db
     .select({ userId: userProfiles.userId })
     .from(userProfiles)
-    .where(eq(userProfiles.userId, userId))
+    .where(
+      and(
+        eq(userProfiles.userId, userId),
+        eq(userProfiles.productSlug, PRODUCT_SLUG)
+      )
+    )
     .limit(1);
 
   if (existing.length === 0) {
@@ -133,6 +152,7 @@ async function ensureUserProfile(
       email: email ?? "unknown",
       credits: 0,
       plan: "free",
+      productSlug: PRODUCT_SLUG,
     });
   }
 }
@@ -149,7 +169,12 @@ export async function getUserSubscriptionTierFromDb(
   const profile = await db
     .select({ plan: userProfiles.plan })
     .from(userProfiles)
-    .where(eq(userProfiles.userId, userId))
+    .where(
+      and(
+        eq(userProfiles.userId, userId),
+        eq(userProfiles.productSlug, PRODUCT_SLUG)
+      )
+    )
     .limit(1);
 
   if (!profile[0]) {
@@ -230,6 +255,7 @@ export async function deductOneCreditForUser(
     userId,
     amount: -1,
     reason: `action:${PRODUCT_CONFIG.name || "generation"}`,
+    productSlug: PRODUCT_SLUG,
   });
 
   /**
@@ -239,7 +265,12 @@ export async function deductOneCreditForUser(
   await db
     .update(userProfiles)
     .set({ credits: sql`${userProfiles.credits} - 1` })
-    .where(eq(userProfiles.userId, userId));
+    .where(
+      and(
+        eq(userProfiles.userId, userId),
+        eq(userProfiles.productSlug, PRODUCT_SLUG)
+      )
+    );
 
   console.log(
     `[Credits] Deducted 1 credit for user ${userId} (tier: ${subscriptionTier}).`
@@ -274,6 +305,7 @@ export async function addCredits(
     userId,
     amount: creditAmount,
     reason: reason ?? `subscription_renewal:${subscriptionTier}`,
+    productSlug: PRODUCT_SLUG,
   });
 
   /**
@@ -286,7 +318,12 @@ export async function addCredits(
       plan: subscriptionTier === "none" ? "free" : subscriptionTier,
       updatedAt: new Date(),
     })
-    .where(eq(userProfiles.userId, userId));
+    .where(
+      and(
+        eq(userProfiles.userId, userId),
+        eq(userProfiles.productSlug, PRODUCT_SLUG)
+      )
+    );
 
   console.log(
     `[Credits] Added ${creditAmount} credits for user ${userId} (tier: ${subscriptionTier}). ` +

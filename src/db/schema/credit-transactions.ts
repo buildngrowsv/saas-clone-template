@@ -53,6 +53,14 @@ export const creditTransactions = pgTable("credit_transactions", {
    */
   reason: text("reason").notNull(),
 
+  /**
+   * Product slug — identifies which clone produced this transaction.
+   * Matches user_profiles.productSlug for the shared fleet database.
+   * Enables cross-product analytics ("which tool generates the most usage?")
+   * without mixing per-product credit counts.
+   */
+  productSlug: text("product_slug").notNull().default("default"),
+
   /** When the transaction occurred */
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [

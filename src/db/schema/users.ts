@@ -78,6 +78,20 @@ export const userProfiles = pgTable("user_profiles", {
 
   /** Last update timestamp — updated on credit changes, plan changes, etc. */
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  /**
+   * Product slug — identifies which AI tool clone this user belongs to.
+   *
+   * WHY THIS EXISTS:
+   * The fleet shares ONE Neon Postgres database across all 42 clones. Each
+   * clone sets this to its own slug (derived from PRODUCT_CONFIG.name) so
+   * queries are automatically scoped to the correct product. Without this,
+   * a user signing up on ai-logo-generator would see credits from
+   * ai-background-remover.
+   *
+   * For single-product deployments this defaults to "default" and has no
+   * effect on behavior. It only matters when DATABASE_URL is shared.
+   */
+  productSlug: text("product_slug").notNull().default("default"),
 }, (table) => [
   /**
    * Index for Stripe webhook lookups.
@@ -85,4 +99,11 @@ export const userProfiles = pgTable("user_profiles", {
    * by their Stripe customer ID. Without this index, that's a full table scan.
    */
   index("idx_user_profiles_stripe_customer_id").on(table.stripeCustomerId),
+
+  /**
+   * Index for product-scoped queries in shared database mode.
+   * Every query from a clone filters by (userId, productSlug), so this composite
+   * index keeps those lookups fast even with millions of rows across 42 products.
+   */
+  index("idx_user_profiles_product_slug").on(table.productSlug),
 ]);
