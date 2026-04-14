@@ -94,6 +94,12 @@ const OPTIONAL_VARS = [
   { name: "R2_BUCKET_NAME", description: "Cloudflare R2 bucket name" },
   { name: "R2_PUBLIC_URL", description: "Cloudflare R2 public URL" },
   { name: "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", description: "Stripe publishable key (client-side alias used in stripe.ts)" },
+  { name: "NEXT_PUBLIC_STRIPE_PRICE_BASIC_MONTHLY", description: "Stripe price ID shown on pricing page (Basic tier)" },
+  { name: "NEXT_PUBLIC_STRIPE_PRICE_STANDARD_MONTHLY", description: "Stripe price ID shown on pricing page (Standard tier)" },
+  { name: "NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY", description: "Stripe price ID shown on pricing page (Pro tier)" },
+  { name: "NEXT_PUBLIC_STRIPE_PRICE_STARTER_PACK", description: "Stripe price ID for one-time Starter credit pack" },
+  { name: "NEXT_PUBLIC_STRIPE_PRICE_GROWTH_PACK", description: "Stripe price ID for one-time Growth credit pack" },
+  { name: "NEXT_PUBLIC_STRIPE_PRICE_PROFESSIONAL_PACK", description: "Stripe price ID for one-time Professional credit pack" },
   { name: "NEXT_PUBLIC_SUPPORT_EMAIL", description: "Support email shown on legal pages (privacy, terms, refund)" },
   { name: "NEXTAUTH_SECRET", description: "Legacy auth secret fallback (prefer BETTER_AUTH_SECRET)" },
 ];
