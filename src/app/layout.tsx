@@ -19,7 +19,7 @@
  * This is the standard pattern recommended by NextAuth for App Router.
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { PRODUCT_CONFIG } from "@/lib/config";
 import { siteConfig } from "@/config/site";
 import { AuthSessionProvider } from "@/components/AuthSessionProvider";
@@ -45,6 +45,28 @@ import "./globals.css";
  * WHY: By deriving metadata from config, cloning a new product automatically
  * updates all SEO tags. No need to manually edit layout.tsx for each clone.
  */
+/**
+ * Viewport configuration — controls the <meta name="viewport"> and <meta name="theme-color"> tags.
+ *
+ * WHY a separate export:
+ * Next.js App Router requires viewport config as a separate export from metadata
+ * (since Next.js 14). Bundling it in metadata causes a build warning.
+ *
+ * WHY theme-color:
+ * Sets the browser chrome (address bar) color on mobile devices to match our brand purple.
+ * Also a Lighthouse PWA audit requirement — without it, PWA installability score drops.
+ * The dark media query variant ensures dark-mode browsers also get proper chrome coloring.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+    { media: "(prefers-color-scheme: light)", color: "#7c3aed" },
+  ],
+};
+
 export const metadata: Metadata = {
   /**
    * metadataBase resolves relative paths in openGraph.images, twitter.images,
