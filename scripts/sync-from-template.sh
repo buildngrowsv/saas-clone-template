@@ -44,6 +44,10 @@ ALLOW_LIST=(
   "src/app/not-found.tsx"
   "src/app/error.tsx"
   "src/app/robots.ts"
+  "src/components/GoogleAnalytics.tsx"
+  "src/components/WatermarkOverlay.tsx"
+  "src/components/CookieConsentBanner.tsx"
+  "src/lib/ga4-public-env.ts"
 )
 
 # NOTE (Builder 1, iron-viper-6183, T19 pane1775, 2026-04-08):
