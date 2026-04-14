@@ -97,18 +97,17 @@ check_pricing() {
 
 check_checkout() {
   local name="$1" repo="$2"
-  local app_dir
-  app_dir="$(find_app_dir "$repo")"
-  [ -z "$app_dir" ] && echo "$name|checkout|MISSING|no app dir" && return
 
+  # Search BOTH src/app/ and app/ — some repos have Stripe routes in app/ even
+  # when most content is in src/app/ (common in clones with i18n restructuring).
   local checkout
-  checkout=$(find "$app_dir" -path "*stripe*checkout*route.ts" -o -path "*stripe*create-checkout*route.ts" 2>/dev/null | grep -v ".next" | head -1)
+  checkout=$(find "$repo/src/app" "$repo/app" -path "*stripe*checkout*route.ts" -o -path "*stripe*create-checkout*route.ts" 2>/dev/null | grep -v ".next" | grep -v node_modules | head -1)
   if [ -n "$checkout" ]; then
     echo "$name|checkout|OK|$checkout"
   else
     # Check for payment link fallback pattern
     local payment_link
-    payment_link=$(grep -rl "buy.stripe.com" "$app_dir" 2>/dev/null | head -1)
+    payment_link=$(grep -rl "buy.stripe.com" "$repo/src/app" "$repo/app" 2>/dev/null | head -1)
     if [ -n "$payment_link" ]; then
       echo "$name|checkout|OK|payment link fallback in $payment_link"
     else
