@@ -116,9 +116,9 @@ export function CookieConsentBanner() {
     <div
       role="dialog"
       aria-label="Cookie and analytics consent"
-      className="fixed bottom-0 left-0 right-0 z-[100] border-t border-white/10 bg-gray-950/95 px-4 py-4 shadow-[0_-8px_32px_rgba(0,0,0,0.45)] backdrop-blur-md"
+      className="fixed bottom-0 left-0 right-0 z-[100] pointer-events-none border-t border-white/10 bg-gray-950/95 px-4 py-4 shadow-[0_-8px_32px_rgba(0,0,0,0.45)] backdrop-blur-md"
     >
-      <div className="container mx-auto flex max-w-screen-xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="pointer-events-auto container mx-auto flex max-w-screen-xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-gray-300">
           We use analytics cookies (Google Analytics) to understand traffic and improve the product.
           You can accept or reject non-essential analytics. See our{" "}
