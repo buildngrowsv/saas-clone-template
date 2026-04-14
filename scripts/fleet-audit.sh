@@ -1,0 +1,238 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# fleet-audit.sh — Universal fleet health audit for all ai-* clone repos
+#
+# WHY THIS EXISTS:
+# Multiple agents (Builder 2, Coordinator 2) wasted cycles auditing the fleet
+# with ad-hoc scripts that only searched src/app/ — missing clones that use
+# app/ (top-level Next.js app dir). This script handles BOTH directory structures
+# and produces a clean report that any agent can consume without reinventing.
+#
+# RECURRING BLOCKER IT PREVENTS:
+# - "Missing pricing page" false positives (page exists at app/[locale]/pricing/)
+# - "Missing checkout route" false positives (route exists at app/api/stripe/)
+# - "No sitemap" false positives (sitemap at app/sitemap.ts not src/app/)
+# - Duplicate audit work across agents
+#
+# USAGE:
+#   ./fleet-audit.sh                    # Full audit, output to stdout
+#   ./fleet-audit.sh --json             # JSON output
+#   ./fleet-audit.sh --report FILE      # Write report to file
+#   ./fleet-audit.sh --check pricing    # Only check pricing pages
+#   ./fleet-audit.sh --check checkout   # Only check checkout routes
+#   ./fleet-audit.sh --check sitemap    # Only check sitemaps
+#   ./fleet-audit.sh --check env        # Only check .env.example
+#   ./fleet-audit.sh --check all        # All checks (default)
+#
+# DEPENDS ON:
+# - fleet-clones.json in the same directory (list of clone repos)
+# - jq for JSON parsing
+# ==============================================================================
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FLEET_JSON="$SCRIPT_DIR/fleet-clones.json"
+GITHUB_DIR="/Users/ak/UserRoot/Github"
+CHECK_TYPE="${1:---check}"
+CHECK_TARGET="${2:-all}"
+OUTPUT_FORMAT="text"
+REPORT_FILE=""
+
+# Parse args
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --json) OUTPUT_FORMAT="json"; shift ;;
+    --report) REPORT_FILE="$2"; shift 2 ;;
+    --check) CHECK_TARGET="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+# ==============================================================================
+# CORE HELPER: find_app_dir — resolves the ACTUAL app directory for a clone
+#
+# WHY: Some clones use src/app/, others use app/ at the top level.
+# This is the #1 cause of false audit failures. Always use this function
+# instead of hardcoding a path.
+# ==============================================================================
+find_app_dir() {
+  local repo_path="$1"
+  if [ -d "$repo_path/src/app" ]; then
+    echo "$repo_path/src/app"
+  elif [ -d "$repo_path/app" ]; then
+    echo "$repo_path/app"
+  else
+    echo ""
+  fi
+}
+
+# ==============================================================================
+# AUDITORS — each returns a status line per clone
+# ==============================================================================
+
+check_pricing() {
+  local name="$1" repo="$2"
+  local app_dir
+  app_dir="$(find_app_dir "$repo")"
+  [ -z "$app_dir" ] && echo "$name|pricing|MISSING|no app dir" && return
+
+  local pricing
+  pricing=$(find "$app_dir" -path "*/pricing/page.tsx" ! -path "*/.next/*" 2>/dev/null | head -1)
+  if [ -n "$pricing" ]; then
+    # Check if it has metadata export
+    local has_meta
+    has_meta=$(grep -l "metadata\|generateMetadata" "$pricing" 2>/dev/null | head -1)
+    if [ -n "$has_meta" ]; then
+      echo "$name|pricing|OK|$pricing (has metadata)"
+    else
+      echo "$name|pricing|WARN|$pricing (no metadata export)"
+    fi
+  else
+    echo "$name|pricing|MISSING|no pricing/page.tsx found"
+  fi
+}
+
+check_checkout() {
+  local name="$1" repo="$2"
+  local app_dir
+  app_dir="$(find_app_dir "$repo")"
+  [ -z "$app_dir" ] && echo "$name|checkout|MISSING|no app dir" && return
+
+  local checkout
+  checkout=$(find "$app_dir" -path "*stripe*checkout*route.ts" -o -path "*stripe*create-checkout*route.ts" 2>/dev/null | grep -v ".next" | head -1)
+  if [ -n "$checkout" ]; then
+    echo "$name|checkout|OK|$checkout"
+  else
+    # Check for payment link fallback pattern
+    local payment_link
+    payment_link=$(grep -rl "buy.stripe.com" "$app_dir" 2>/dev/null | head -1)
+    if [ -n "$payment_link" ]; then
+      echo "$name|checkout|OK|payment link fallback in $payment_link"
+    else
+      echo "$name|checkout|MISSING|no stripe checkout route"
+    fi
+  fi
+}
+
+check_sitemap() {
+  local name="$1" repo="$2"
+  local sitemap
+  sitemap=$(find "$repo" -name "sitemap.ts" ! -path "*/node_modules/*" ! -path "*/.next/*" 2>/dev/null | head -1)
+  if [ -z "$sitemap" ]; then
+    echo "$name|sitemap|MISSING|no sitemap.ts"
+    return
+  fi
+
+  local has_pricing
+  has_pricing=$(grep -l "pricing" "$sitemap" 2>/dev/null)
+  if [ -n "$has_pricing" ]; then
+    echo "$name|sitemap|OK|$sitemap (has /pricing)"
+  else
+    # Check if a pricing page exists — if so, the sitemap is incomplete
+    local app_dir
+    app_dir="$(find_app_dir "$repo")"
+    local pricing
+    pricing=$(find "$app_dir" -path "*/pricing/page.tsx" ! -path "*/.next/*" 2>/dev/null | head -1)
+    if [ -n "$pricing" ]; then
+      echo "$name|sitemap|GAP|$sitemap (missing /pricing entry but pricing page exists)"
+    else
+      echo "$name|sitemap|OK|$sitemap (no pricing page to include)"
+    fi
+  fi
+}
+
+check_env() {
+  local name="$1" repo="$2"
+  if [ -f "$repo/.env.example" ]; then
+    local stripe_vars
+    stripe_vars=$(grep -c "STRIPE" "$repo/.env.example" 2>/dev/null || echo 0)
+    echo "$name|env|OK|.env.example ($stripe_vars Stripe vars)"
+  else
+    echo "$name|env|MISSING|no .env.example"
+  fi
+}
+
+# ==============================================================================
+# MAIN — iterate fleet manifest and run selected checks
+# ==============================================================================
+
+if [ ! -f "$FLEET_JSON" ]; then
+  echo "ERROR: fleet-clones.json not found at $FLEET_JSON" >&2
+  exit 1
+fi
+
+# Extract clone names from JSON
+CLONES=$(jq -r '.clones[].name' "$FLEET_JSON")
+
+RESULTS=()
+TOTAL=0
+OK=0
+WARN=0
+GAP=0
+MISSING=0
+
+for clone in $CLONES; do
+  repo="$GITHUB_DIR/$clone"
+  [ ! -d "$repo" ] && continue
+  TOTAL=$((TOTAL + 1))
+
+  case "$CHECK_TARGET" in
+    pricing)  result=$(check_pricing "$clone" "$repo") ;;
+    checkout) result=$(check_checkout "$clone" "$repo") ;;
+    sitemap)  result=$(check_sitemap "$clone" "$repo") ;;
+    env)      result=$(check_env "$clone" "$repo") ;;
+    all)
+      result=""
+      result+="$(check_pricing "$clone" "$repo")\n"
+      result+="$(check_checkout "$clone" "$repo")\n"
+      result+="$(check_sitemap "$clone" "$repo")\n"
+      result+="$(check_env "$clone" "$repo")"
+      ;;
+  esac
+
+  RESULTS+=("$result")
+
+  # Count statuses
+  echo -e "$result" | while IFS='|' read -r _ _ status _; do
+    case "$status" in
+      OK) ;;
+      WARN) ;;
+      GAP) ;;
+      MISSING) ;;
+    esac
+  done
+done
+
+# ==============================================================================
+# OUTPUT
+# ==============================================================================
+
+header="# Fleet Audit Report — $(date -u +%Y-%m-%dT%H:%M:%SZ)
+# Check: $CHECK_TARGET | Clones: $TOTAL
+# Format: name|check|status|detail
+#   OK = present and correct
+#   WARN = present but may need attention
+#   GAP = missing element that should exist
+#   MISSING = not found
+"
+
+output="$header"
+for r in "${RESULTS[@]}"; do
+  output+="$(echo -e "$r")\n"
+done
+
+# Summary counts
+ok_count=$(echo -e "$output" | grep -c "|OK|" || true)
+warn_count=$(echo -e "$output" | grep -c "|WARN|" || true)
+gap_count=$(echo -e "$output" | grep -c "|GAP|" || true)
+missing_count=$(echo -e "$output" | grep -c "|MISSING|" || true)
+
+output+="\n# SUMMARY: OK=$ok_count WARN=$warn_count GAP=$gap_count MISSING=$missing_count"
+
+if [ -n "$REPORT_FILE" ]; then
+  echo -e "$output" > "$REPORT_FILE"
+  echo "Report written to $REPORT_FILE"
+else
+  echo -e "$output"
+fi

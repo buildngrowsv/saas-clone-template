@@ -19,6 +19,9 @@
 
 "use client";
 
+import { WatermarkOverlay } from "@/components/WatermarkOverlay";
+import { siteConfig } from "@/config/site";
+
 interface ResultDisplayProps {
   /**
    * URL of the original uploaded image (from createObjectURL or a data URL).
@@ -40,6 +43,13 @@ interface ResultDisplayProps {
    * when running low. -1 means unlimited (Pro tier).
    */
   readonly remainingCreditsAfterGeneration: number;
+
+  /**
+   * Whether the user is on a paid subscription tier (basic or pro).
+   * When true, the watermark overlay is hidden — a tangible upgrade benefit.
+   * Defaults to false (free tier shows watermark).
+   */
+  readonly isPaidUser?: boolean;
 }
 
 export function ResultDisplay({
@@ -47,6 +57,7 @@ export function ResultDisplay({
   processedResultUrl,
   onProcessAnother,
   remainingCreditsAfterGeneration,
+  isPaidUser = false,
 }: ResultDisplayProps) {
   /**
    * handleDownloadResult — Triggers a browser download of the processed image.
@@ -94,18 +105,36 @@ export function ResultDisplay({
             </div>
           </div>
 
-          {/* Processed result */}
+          {/* Processed result — watermarked for free-tier users as a viral growth loop.
+           * The WatermarkOverlay adds a "Made with [ProductName]" strip at the bottom
+           * of the image for free users. Paid users see clean output. When free users
+           * share their results on social media, the watermark drives organic impressions.
+           */}
           <div>
             <p className="text-sm text-brand-400 mb-3 text-center font-medium uppercase tracking-wider">
               Result
             </p>
-            <div className="rounded-xl overflow-hidden bg-surface-secondary">
-              <img
-                src={processedResultUrl}
-                alt="AI-processed result"
-                className="w-full h-auto object-contain max-h-80"
-              />
-            </div>
+            <WatermarkOverlay
+              productName={siteConfig.siteName}
+              isPaidUser={isPaidUser}
+            >
+              <div className="rounded-xl overflow-hidden bg-surface-secondary">
+                <img
+                  src={processedResultUrl}
+                  alt="AI-processed result"
+                  className="w-full h-auto object-contain max-h-80"
+                />
+              </div>
+            </WatermarkOverlay>
+            {/* Upgrade nudge for free users — reinforces watermark removal as a benefit */}
+            {!isPaidUser && (
+              <p className="text-[11px] text-text-muted mt-2 text-center">
+                <a href="#pricing" className="text-brand-400 hover:text-brand-300 underline">
+                  Upgrade
+                </a>
+                {" "}to remove watermark
+              </p>
+            )}
           </div>
         </div>
 
