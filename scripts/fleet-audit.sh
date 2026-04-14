@@ -222,6 +222,28 @@ check_error_pages() {
   fi
 }
 
+# Gate 8: Credits must be database-backed, not in-memory Map.
+# In-memory credits reset on every Vercel cold start = unlimited free usage = $0 MRR.
+check_credits() {
+  local name="$1" repo="$2"
+  local cfile=""
+  [ -f "$repo/src/lib/credits.ts" ] && cfile="$repo/src/lib/credits.ts"
+  [ -f "$repo/lib/credits.ts" ] && cfile="$repo/lib/credits.ts"
+
+  if [ -z "$cfile" ]; then
+    echo "$name|credits|WARN|no credits.ts (may use different pattern)"
+    return
+  fi
+
+  if grep -q 'new Map' "$cfile" 2>/dev/null; then
+    echo "$name|credits|GAP|IN-MEMORY credits (new Map) — $0 MRR risk"
+  elif grep -qE 'db|drizzle|prisma|@/db|import.*from.*database' "$cfile" 2>/dev/null; then
+    echo "$name|credits|OK|database-backed credits"
+  else
+    echo "$name|credits|WARN|credits.ts exists but pattern unclear"
+  fi
+}
+
 # Check for validate-env script
 check_validate_env() {
   local name="$1" repo="$2"
@@ -266,6 +288,7 @@ for clone in $CLONES; do
     middleware)   result=$(check_middleware "$clone" "$repo") ;;
     error-pages)  result=$(check_error_pages "$clone" "$repo") ;;
     validate-env) result=$(check_validate_env "$clone" "$repo") ;;
+    credits)      result=$(check_credits "$clone" "$repo") ;;
     all)
       result=""
       result+="$(check_pricing "$clone" "$repo")\n"
@@ -274,7 +297,8 @@ for clone in $CLONES; do
       result+="$(check_env "$clone" "$repo")\n"
       result+="$(check_middleware "$clone" "$repo")\n"
       result+="$(check_error_pages "$clone" "$repo")\n"
-      result+="$(check_validate_env "$clone" "$repo")"
+      result+="$(check_validate_env "$clone" "$repo")\n"
+      result+="$(check_credits "$clone" "$repo")"
       ;;
   esac
 
