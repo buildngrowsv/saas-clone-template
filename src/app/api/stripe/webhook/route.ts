@@ -25,6 +25,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { stripeServerClient } from "@/lib/stripe";
+import { PRODUCT_CONFIG } from "@/lib/config";
 import { db } from "@/db";
 import { userProfiles } from "@/db/schema/users";
 import { subscriptions } from "@/db/schema/subscriptions";
@@ -32,6 +33,16 @@ import { creditTransactions } from "@/db/schema/credit-transactions";
 import { addCredits, type SubscriptionTier } from "@/lib/credits";
 import { eq, and } from "drizzle-orm";
 import Stripe from "stripe";
+
+/**
+ * Product slug for shared database scoping — same derivation as credits.ts.
+ * All DB queries in this webhook handler are filtered by this slug to prevent
+ * cross-product data collisions when clones share a single Neon database.
+ */
+const PRODUCT_SLUG: string =
+  PRODUCT_CONFIG.name && PRODUCT_CONFIG.name !== "AI Tool Name"
+    ? PRODUCT_CONFIG.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    : "default";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,7 +93,12 @@ async function upsertUserProfile(
   const existing = await db
     .select({ userId: userProfiles.userId })
     .from(userProfiles)
-    .where(eq(userProfiles.userId, userId))
+    .where(
+      and(
+        eq(userProfiles.userId, userId),
+        eq(userProfiles.productSlug, PRODUCT_SLUG)
+      )
+    )
     .limit(1);
 
   if (existing.length === 0) {
@@ -92,6 +108,7 @@ async function upsertUserProfile(
       credits: 0,
       plan,
       stripeCustomerId,
+      productSlug: PRODUCT_SLUG,
     });
   } else {
     await db
@@ -101,7 +118,12 @@ async function upsertUserProfile(
         stripeCustomerId,
         updatedAt: new Date(),
       })
-      .where(eq(userProfiles.userId, userId));
+      .where(
+        and(
+          eq(userProfiles.userId, userId),
+          eq(userProfiles.productSlug, PRODUCT_SLUG)
+        )
+      );
   }
 }
 
@@ -132,6 +154,7 @@ async function upsertSubscription(
       plan,
       status: stripeSubscription.status,
       currentPeriodEnd: periodEnd,
+      productSlug: PRODUCT_SLUG,
     });
   } else {
     await db
@@ -156,7 +179,12 @@ async function findUserByStripeCustomerId(
   const result = await db
     .select({ userId: userProfiles.userId })
     .from(userProfiles)
-    .where(eq(userProfiles.stripeCustomerId, stripeCustomerId))
+    .where(
+      and(
+        eq(userProfiles.stripeCustomerId, stripeCustomerId),
+        eq(userProfiles.productSlug, PRODUCT_SLUG)
+      )
+    )
     .limit(1);
 
   return result[0]?.userId ?? null;
@@ -318,11 +346,16 @@ export async function POST(request: NextRequest) {
           await db
             .update(userProfiles)
             .set({ plan, updatedAt: new Date() })
-            .where(eq(userProfiles.userId, userId));
+            .where(
+              and(
+                eq(userProfiles.userId, userId),
+                eq(userProfiles.productSlug, PRODUCT_SLUG)
+              )
+            );
         }
 
         console.log(
-          `[Stripe Webhook] subscription.updated: userId=${userId}, plan=${plan}, status=${stripeSubscription.status}`
+          `[Stripe Webhook] subscription.updated: userId=${userId}, plan=${plan}, status=${stripeSubscription.status}, product=${PRODUCT_SLUG}`
         );
         break;
       }
@@ -355,10 +388,15 @@ export async function POST(request: NextRequest) {
         await db
           .update(userProfiles)
           .set({ plan: "free", updatedAt: new Date() })
-          .where(eq(userProfiles.userId, userId));
+          .where(
+            and(
+              eq(userProfiles.userId, userId),
+              eq(userProfiles.productSlug, PRODUCT_SLUG)
+            )
+          );
 
         console.log(
-          `[Stripe Webhook] subscription.deleted: userId=${userId} downgraded to free`
+          `[Stripe Webhook] subscription.deleted: userId=${userId} downgraded to free, product=${PRODUCT_SLUG}`
         );
         break;
       }
@@ -404,6 +442,7 @@ export async function POST(request: NextRequest) {
             .where(
               and(
                 eq(creditTransactions.userId, userId),
+                eq(creditTransactions.productSlug, PRODUCT_SLUG),
                 eq(creditTransactions.reason, `invoice_paid:${invoiceId}`)
               )
             )

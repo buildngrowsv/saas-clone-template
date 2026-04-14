@@ -41,10 +41,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { PRODUCT_CONFIG } from "@/lib/config";
 import { db } from "@/db";
 import { userProfiles } from "@/db/schema/users";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getStripe } from "@/lib/stripe";
+
+/**
+ * Product slug for shared database scoping — same derivation as credits.ts.
+ */
+const PRODUCT_SLUG: string =
+  PRODUCT_CONFIG.name && PRODUCT_CONFIG.name !== "AI Tool Name"
+    ? PRODUCT_CONFIG.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    : "default";
 
 export async function POST(request: NextRequest) {
   const stripe = getStripe();
@@ -84,7 +93,12 @@ export async function POST(request: NextRequest) {
   const [profile] = await db
     .select()
     .from(userProfiles)
-    .where(eq(userProfiles.userId, session.user.id))
+    .where(
+      and(
+        eq(userProfiles.userId, session.user.id),
+        eq(userProfiles.productSlug, PRODUCT_SLUG)
+      )
+    )
     .limit(1);
 
   let stripeCustomerId = profile?.stripeCustomerId;
@@ -108,7 +122,12 @@ export async function POST(request: NextRequest) {
     await db
       .update(userProfiles)
       .set({ stripeCustomerId, updatedAt: new Date() })
-      .where(eq(userProfiles.userId, session.user.id));
+      .where(
+        and(
+          eq(userProfiles.userId, session.user.id),
+          eq(userProfiles.productSlug, PRODUCT_SLUG)
+        )
+      );
   }
 
   /**

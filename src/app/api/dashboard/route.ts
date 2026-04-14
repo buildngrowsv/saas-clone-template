@@ -27,9 +27,18 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { PRODUCT_CONFIG } from "@/lib/config";
 import { db } from "@/db";
 import { userProfiles } from "@/db/schema/users";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+
+/**
+ * Product slug for shared database scoping — same derivation as credits.ts.
+ */
+const PRODUCT_SLUG: string =
+  PRODUCT_CONFIG.name && PRODUCT_CONFIG.name !== "AI Tool Name"
+    ? PRODUCT_CONFIG.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    : "default";
 
 export async function GET() {
   /**
@@ -55,7 +64,12 @@ export async function GET() {
         plan: userProfiles.plan,
       })
       .from(userProfiles)
-      .where(eq(userProfiles.userId, authenticatedUserId))
+      .where(
+        and(
+          eq(userProfiles.userId, authenticatedUserId),
+          eq(userProfiles.productSlug, PRODUCT_SLUG)
+        )
+      )
       .limit(1);
 
     const currentCredits = userProfile?.credits ?? 0;
