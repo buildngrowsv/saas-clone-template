@@ -80,9 +80,10 @@ check_pricing() {
   local pricing
   pricing=$(find "$app_dir" -path "*/pricing/page.tsx" ! -path "*/.next/*" 2>/dev/null | head -1)
   if [ -n "$pricing" ]; then
-    # Check if it has metadata export
-    local has_meta
-    has_meta=$(grep -l "metadata\|generateMetadata" "$pricing" 2>/dev/null | head -1)
+    # Check if it has metadata export — either in page.tsx or in layout.tsx (same dir)
+    local pricing_dir has_meta
+    pricing_dir=$(dirname "$pricing")
+    has_meta=$(grep -l "metadata\|generateMetadata" "$pricing" "$pricing_dir/layout.tsx" 2>/dev/null | head -1)
     if [ -n "$has_meta" ]; then
       echo "$name|pricing|OK|$pricing (has metadata)"
     else
