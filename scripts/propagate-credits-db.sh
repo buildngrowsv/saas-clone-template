@@ -42,6 +42,7 @@ echo ""
 # Template source files
 TEMPLATE_DB_DIR="$TEMPLATE_ROOT/src/db"
 TEMPLATE_CREDITS="$TEMPLATE_ROOT/src/lib/credits.ts"
+TEMPLATE_DRIZZLE_CONFIG="$TEMPLATE_ROOT/drizzle.config.ts"
 
 if [ ! -d "$TEMPLATE_DB_DIR" ] || [ ! -f "$TEMPLATE_CREDITS" ]; then
   echo "ERROR: Template DB or credits files not found. Run from template root." >&2
@@ -114,16 +115,29 @@ for repo_path in "$GITHUB_DIR"/ai-*/; do
       cp "$TEMPLATE_CREDITS" "$repo_path/lib/credits.ts"
     fi
 
-    # 3. Add npm deps if missing
+    # 3. Copy drizzle.config.ts if missing
+    if [ ! -f "$repo_path/drizzle.config.ts" ] && [ -f "$TEMPLATE_DRIZZLE_CONFIG" ]; then
+      # Adapt schema path based on whether clone uses src/ prefix
+      if [ -n "$APP_PREFIX" ]; then
+        cp "$TEMPLATE_DRIZZLE_CONFIG" "$repo_path/drizzle.config.ts"
+      else
+        # Clone uses root-level app/ — adjust schema path from ./src/db/schema/* to ./db/schema/*
+        sed 's|"./src/db/schema/\*"|"./db/schema/*"|' "$TEMPLATE_DRIZZLE_CONFIG" > "$repo_path/drizzle.config.ts"
+      fi
+    fi
+
+    # 4. Add npm deps if missing
     if ! grep -q '"drizzle-orm"' "$repo_path/package.json" 2>/dev/null; then
-      # Add drizzle-orm and neon deps using npm
       (cd "$repo_path" && npm install --save drizzle-orm @neondatabase/serverless 2>/dev/null) || true
+    fi
+    if ! grep -q '"drizzle-kit"' "$repo_path/package.json" 2>/dev/null; then
+      (cd "$repo_path" && npm install --save-dev drizzle-kit 2>/dev/null) || true
     fi
   fi
 
   PROPAGATED=$((PROPAGATED + 1))
 
-  # 4. Check if generate route needs await fix
+  # 5. Check if generate route needs await fix
   gen_routes=$(find "$repo_path" -path '*api*generate*route.ts' -not -path '*node_modules*' -not -path '*.next*' 2>/dev/null)
   if [ -n "$gen_routes" ]; then
     for route in $gen_routes; do
@@ -151,8 +165,10 @@ fi
 
 echo ""
 echo "# NEXT STEPS (after --apply):"
-echo "# 1. Run 'npm install' in each updated repo"
-echo "# 2. Add DATABASE_URL to each repo's Vercel env vars"
-echo "# 3. Run 'npx drizzle-kit push' in each repo to create tables"
-echo "# 4. Fix generate routes that need 'await' (see warnings above)"
-echo "# 5. Commit and push each repo"
+echo "# 1. Run 'npm install' in each updated repo (deps already added by this script)"
+echo "# 2. Create a shared Neon project at neon.tech (see tmp/OPTIMIZATION-SHARED-DB-PROPOSAL.md)"
+echo "# 3. Run: fleet-env-deploy.sh --set FAL_KEY --apply"
+echo "# 4. Run: fleet-env-deploy.sh --set DATABASE_URL --value 'postgres://...' --apply"
+echo "# 5. Run: fleet-db-push.sh --apply (creates tables in shared DB)"
+echo "# 6. Fix generate routes that need 'await' (see warnings above)"
+echo "# 7. Commit and push each repo"
