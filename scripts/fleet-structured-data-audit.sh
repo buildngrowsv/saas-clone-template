@@ -132,7 +132,16 @@ for domain in "${DD_DOMAINS[@]}"; do
   best_pass="—"
 
   # 1. Homepage — SoftwareApplication
+  # Check both / and /en/ — next-intl sites may have JSON-LD only in [locale]/layout
   home_html=$(curl -sL "https://${domain}/" --connect-timeout 10 2>/dev/null)
+  home_html_locale=$(curl -sL "https://${domain}/en" --connect-timeout 10 2>/dev/null)
+  if [ -n "$home_html_locale" ]; then
+    locale_count=$(echo "$home_html_locale" | grep -o 'application/ld+json' | wc -l | tr -d ' ')
+    base_count=$(echo "$home_html" | grep -o 'application/ld+json' | wc -l | tr -d ' ')
+    if [ "$locale_count" -gt "$base_count" ]; then
+      home_html="$home_html_locale"
+    fi
+  fi
   if [ -n "$home_html" ]; then
     home_types=$(echo "$home_html" | extract_jsonld_types 2>/dev/null || echo "ERROR")
     if has_type "$home_types" "SoftwareApplication"; then
@@ -150,7 +159,20 @@ for domain in "${DD_DOMAINS[@]}"; do
   TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
 
   # 2. /pricing — FAQPage + BreadcrumbList
+  # Next-intl middleware rewrites /pricing to /en/pricing but RSC streaming may
+  # not include nested layout JSON-LD in the initial curl response. Check both
+  # paths and use whichever has more JSON-LD types (the locale-prefixed version
+  # always includes nested layout scripts in SSR output).
   pricing_html=$(curl -sL "https://${domain}/pricing" --connect-timeout 10 2>/dev/null)
+  pricing_html_locale=$(curl -sL "https://${domain}/en/pricing" --connect-timeout 10 2>/dev/null)
+  # Use the locale-prefixed version if it has more JSON-LD (always does for next-intl sites)
+  if [ -n "$pricing_html_locale" ]; then
+    locale_count=$(echo "$pricing_html_locale" | grep -o 'application/ld+json' | wc -l | tr -d ' ')
+    base_count=$(echo "$pricing_html" | grep -o 'application/ld+json' | wc -l | tr -d ' ')
+    if [ "$locale_count" -gt "$base_count" ]; then
+      pricing_html="$pricing_html_locale"
+    fi
+  fi
   if [ -n "$pricing_html" ]; then
     pricing_types=$(echo "$pricing_html" | extract_jsonld_types 2>/dev/null || echo "ERROR")
 
