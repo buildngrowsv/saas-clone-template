@@ -1,0 +1,44 @@
+---
+description: For every clone in this fleet — set it up as a running business per the master checklist (Vercel + custom domain + OAuth + Stripe LIVE + GA4 + GSC + Resend + rate limits + SEO + legal + observability), not just code-complete.
+alwaysApply: true
+globs:
+  - "**/*"
+---
+
+# Set this clone up as a running business
+
+A clone passing the technical clone-factory gates (Gates 1-15 in
+`UserRoot/.claude/rules/clone-factory-quality-gates.md`) is **code
+complete**, not **launched**. To turn it into a real, payable,
+indexable, observable business, walk the **master checklist**:
+
+> **`Github/business-operations/general-sops/PROJECT-SETUP-AS-RUNNING-BUSINESS-MASTER-CHECKLIST.md`**
+
+This is the same checklist GenFlick (`Github/genflix-movie-generator/`)
+walked end-to-end — every step in the checklist points at GenFlick's
+working artifacts as a copy-paste reference. There is also a Cursor
+skill at `~/.cursor/skills-cursor/project-setup-as-running-business/`
+with the operational summary.
+
+## Clone-specific notes
+
+- **Stage 3 (Vercel rootDirectory):** clones in this fleet typically
+  use the repo root as the Next.js app, not `app/` — confirm before
+  copying GenFlick's `rootDirectory=app` setting.
+- **Stage 4 (custom domain):** every Tier-1-graduating clone gets a
+  branded domain on the SymplyAI Cloudflare zone or a dedicated
+  registration. Don't ship a clone publicly on a `*.vercel.app`
+  default for marketing purposes.
+- **Stage 7 (Stripe LIVE):** clones diverged on env naming (29/42 use
+  `STRIPE_PRICE_ID_PRO` not the template's `STRIPE_PRICE_PRO`). Check
+  what THIS clone's checkout route reads before setting Vercel envs
+  — see `pane1776/FLEET-STRIPE-ENV-NAMING-MAP-B3-2026-04-14.md`.
+- **Stage 11 (SEO):** clones using next-intl must satisfy Gates 14 +
+  15 from clone-factory-quality-gates (don't exclude `/pricing` from
+  the i18n matcher; standalone `/pricing/page.tsx` re-export).
+- **Stage 16 (operating discipline):** the clone's `STATUS.md` must
+  match its disk reality and BridgeMind board state. Stale STATUS is
+  the #1 source of duplicated swarm work on this fleet.
+
+When a coordinator dispatches "stand up clone X," the work is
+**walking the master checklist for X**, not adding more features.
